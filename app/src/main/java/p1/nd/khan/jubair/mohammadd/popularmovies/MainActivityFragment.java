@@ -41,9 +41,10 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
     private final String LOG_TAG = MainActivityFragment.class.getSimpleName();
     private ArrayList<String> mMovieUrls;
     private CustomImageAdapter mMovieAdapter;
-    private ArrayList<MdbMovie> mdbMovies = new ArrayList<>();
+    private ArrayList<MdbMovie> mdbMovies;
     private String mSortOrder;
-    String SORT_ORDER = "sort_order";
+    static String SORT_ORDER = "NA";
+    private boolean mRestoredState;
 
     public static final String SORT_ORDER_POPULARITY = "popularity.desc";
     public static final String SORT_ORDER_RATING = "vote_average.desc";
@@ -79,25 +80,24 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
         mCallback = null;
     }
 
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         // Add this line in order for this fragment to handle menu events.
         setHasOptionsMenu(true);
 
-        /*
-        if (getArguments() != null) {
-            mSortOrder = getArguments().getString(SORT_ORDER);
-        }
-        */
-
-        if (mSortOrder == null || mSortOrder.length() == 0) {
-            //set default sort order as popularity.desc
-            mSortOrder = SORT_ORDER_POPULARITY;
+        if (savedInstanceState != null) {
+            mdbMovies = (ArrayList<MdbMovie>) savedInstanceState.get("movie_stored");
+            mSortOrder = savedInstanceState.getString("sort_mode");
+            Log.i(LOG_TAG, "savedInstanceState - mdbMovies:" + mdbMovies.size() + ",mSortOrder:" + mSortOrder);
+            mRestoredState = true;
         }
 
-        Log.i(LOG_TAG, "SORT_ORDER :" + mSortOrder);
-        // Create MovieAdapter every times
+        //set default sort order as popularity.desc
+        if (mSortOrder == null || mSortOrder.length() == 0) mSortOrder = SORT_ORDER_POPULARITY;
+
+        // Create MovieAdapter every times : moved to onCreateView
         mMovieUrls = new ArrayList<>();
         mMovieAdapter = new CustomImageAdapter(mMovieUrls);
 
@@ -105,6 +105,20 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
         getMovieFromNet(mSortOrder);
     }
 
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        // Always call the superclass so it can save the view hierarchy state
+        super.onSaveInstanceState(outState);
+
+        // Save the movie's current state
+        outState.putParcelableArrayList("movie_stored", mdbMovies);
+        outState.putString("sort_mode", mSortOrder);
+
+        // store the old sort order
+        SORT_ORDER = mSortOrder;
+
+        Log.d(LOG_TAG, "== onSaveInstanceState.");
+    }
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -135,28 +149,62 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
         }
     }
 
+    /**
+     * Gets movie details from MDB database from using internet call
+     *
+     * @param sortOrder to fetch the movie details from MDB.
+     */
     private void getMovieFromNet(String sortOrder) {
 
-
-        Log.i(LOG_TAG, "mSortOrder:" + mSortOrder);
-
-        if (Utility.isNetworkAvailable(getActivity())) {
-            Log.d(LOG_TAG, "== Getting Movies from the Internet.");
-            // Get Movie from Internet
-            FetchMovieTask fetchMoviesTask = new FetchMovieTask();
-            fetchMoviesTask.execute(sortOrder);
+        Log.i(LOG_TAG, "SORT_ORDER:" + SORT_ORDER + ",mSortOrder:" + mSortOrder);
+        if (SORT_ORDER.equals(mSortOrder)) {
+            Log.i(LOG_TAG, "SORT_ORDER && mSortOrder are same!");
         } else {
-            Log.w(LOG_TAG, "== No Internet Connection");
-            Toast.makeText(getActivity(), "No Internet Connection.", Toast.LENGTH_SHORT).show();
+            //to avoid making unnecessary URL call, since sort order is not changed
+            // fix the issue of making URL call when clicking back from detail page to main page
+            if (Utility.isNetworkAvailable(getActivity())) {
+                Log.d(LOG_TAG, "== Getting Movies from the Internet.");
+                // Get Movie from Internet
+                mdbMovies = new ArrayList<>();
+                FetchMovieTask fetchMoviesTask = new FetchMovieTask();
+                fetchMoviesTask.execute(sortOrder);
+                //update sort order to avoid making URL call un-till sort order is not changed
+                SORT_ORDER = sortOrder;
+            } else {
+                Log.w(LOG_TAG, "== No Internet Connection");
+                Toast.makeText(getActivity(), "No Internet Connection.", Toast.LENGTH_SHORT).show();
+            }
         }
-    }
 
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
         final View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+
+        // If it is not a restored state set mMoviePosterAdapter to an empty ImageAdapter
+        // otherwise initialize it with the adapter from the saved state
+        if (!mRestoredState) {
+            Log.i(LOG_TAG, "===if- onCreateView:");
+            //mMovieAdapter = new CustomImageAdapter(mMovieUrls);
+        } else {
+            Log.i(LOG_TAG, "===else - onCreateView:");
+            // Fixed the following bug:
+            // if you're in detail activity and turn network off, you go back to the main page
+            // change orientation it would crash
+
+            // So if the mMoviesList is empty even though the mRestoredState might be true
+            // Set the mRestoredState to false and then return the rootView
+            if (mdbMovies == null) {
+                mRestoredState = false;
+                return rootView;
+            }
+            //load poster image name from MdbMovie object
+            for (MdbMovie movie : mdbMovies) mMovieUrls.add(movie.getPosterUrl());
+        }
+
         // Get a reference to the ListView, and attach this adapter to it.
         GridView mGridView = (GridView) rootView.findViewById(R.id.movie_list_gridview);
         //set adaptor
@@ -164,14 +212,6 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
         // Set OnItemClickListener so we can be notified on item clicks
         mGridView.setOnItemClickListener(this);
         return rootView;
-    }
-
-
-    @Override
-    public void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putParcelableArrayList("movies", mdbMovies);
-        //outState.putString("sort_mode", mSortOrder);
     }
 
     // https://www.bignerdranch.com/blog/solving-the-android-image-loading-problem-volley-vs-picasso/
