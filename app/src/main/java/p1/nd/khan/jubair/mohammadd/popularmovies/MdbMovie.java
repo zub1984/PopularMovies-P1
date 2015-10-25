@@ -9,6 +9,7 @@ import android.os.Parcelable;
 
 /**
  * Implementing Parcelable
+ * http://www.developerphil.com/parcelable-vs-serializable/
  * http://stackoverflow.com/questions/12503836/how-to-save-custom-arraylist-on-android-screen-rotate
  */
 
