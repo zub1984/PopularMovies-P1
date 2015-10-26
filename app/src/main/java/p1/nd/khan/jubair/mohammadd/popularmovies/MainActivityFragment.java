@@ -41,10 +41,12 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
     private final String LOG_TAG = MainActivityFragment.class.getSimpleName();
     private ArrayList<String> mMovieUrls;
     private CustomImageAdapter mMovieAdapter;
-    private ArrayList<MdbMovie> mdbMovies;
     private String mSortOrder;
-    static String SORT_ORDER = "NA";
-    private boolean mRestoredState;
+
+    // define static to avoid calling MDB URL for state change and while returning back to main fragment from detail fragment.
+    private static ArrayList<MdbMovie> mdbMovies = new ArrayList<>();
+    private static String SORT_ORDER = "NA";
+    private static boolean mRestoredState;
 
     public static final String SORT_ORDER_POPULARITY = "popularity.desc";
     public static final String SORT_ORDER_RATING = "vote_average.desc";
@@ -92,17 +94,21 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
             mSortOrder = savedInstanceState.getString("sort_mode");
             Log.i(LOG_TAG, "savedInstanceState - mdbMovies:" + mdbMovies.size() + ",mSortOrder:" + mSortOrder);
             mRestoredState = true;
+        } else {
+            Log.i(LOG_TAG, "Restored Bundle savedInstanceState is null");
         }
 
         //set default sort order as popularity.desc
         if (mSortOrder == null || mSortOrder.length() == 0) mSortOrder = SORT_ORDER_POPULARITY;
 
-        // Create MovieAdapter every times : moved to onCreateView
-        mMovieUrls = new ArrayList<>();
-        mMovieAdapter = new CustomImageAdapter(mMovieUrls);
-
         //Start fetching the records from MDB!
         getMovieFromNet(mSortOrder);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        Log.d(LOG_TAG, "== onPause.");
     }
 
     @Override
@@ -116,6 +122,7 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
 
         // store the old sort order
         SORT_ORDER = mSortOrder;
+        mRestoredState = true;
 
         Log.d(LOG_TAG, "== onSaveInstanceState.");
     }
@@ -163,9 +170,8 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
             //to avoid making unnecessary URL call, since sort order is not changed
             // fix the issue of making URL call when clicking back from detail page to main page
             if (Utility.isNetworkAvailable(getActivity())) {
-                Log.d(LOG_TAG, "== Getting Movies from the Internet.");
+                Log.v(LOG_TAG, "== Getting Movies from the Internet.");
                 // Get Movie from Internet
-                mdbMovies = new ArrayList<>();
                 FetchMovieTask fetchMoviesTask = new FetchMovieTask();
                 fetchMoviesTask.execute(sortOrder);
                 //update sort order to avoid making URL call un-till sort order is not changed
@@ -175,7 +181,6 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
                 Toast.makeText(getActivity(), "No Internet Connection.", Toast.LENGTH_SHORT).show();
             }
         }
-
     }
 
     @Override
@@ -184,25 +189,17 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
 
         final View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
-        // If it is not a restored state set mMoviePosterAdapter to an empty ImageAdapter
-        // otherwise initialize it with the adapter from the saved state
-        if (!mRestoredState) {
-            Log.i(LOG_TAG, "===if- onCreateView:");
-            //mMovieAdapter = new CustomImageAdapter(mMovieUrls);
-        } else {
-            Log.i(LOG_TAG, "===else - onCreateView:");
-            // Fixed the following bug:
-            // if you're in detail activity and turn network off, you go back to the main page
-            // change orientation it would crash
+        Log.i(LOG_TAG, "== onCreateView, mdbMovies:" + mdbMovies.size() + ",mRestoredState:" + mRestoredState);
 
-            // So if the mMoviesList is empty even though the mRestoredState might be true
-            // Set the mRestoredState to false and then return the rootView
-            if (mdbMovies == null) {
-                mRestoredState = false;
-                return rootView;
-            }
+        mMovieUrls = new ArrayList<>();
+        mMovieAdapter = new CustomImageAdapter(mMovieUrls);
+
+        // if it is restored state load data from saved state (happens while switching from portrait mode to landscape mode)
+        // mRestoredState : changed to static to read/store data independent of instance.
+        if (mRestoredState) {
             //load poster image name from MdbMovie object
             for (MdbMovie movie : mdbMovies) mMovieUrls.add(movie.getPosterUrl());
+            mMovieAdapter.notifyDataSetChanged();
         }
 
         // Get a reference to the ListView, and attach this adapter to it.
@@ -310,7 +307,7 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
                         .appendQueryParameter(PAGE, Integer.toString(page))
                         .build();
 
-                Log.w(LOG_TAG, "URL:" + builtUri.toString());
+                Log.v(LOG_TAG, "URL:" + builtUri.toString());
 
                 URL url = new URL(builtUri.toString());
 
