@@ -1,6 +1,7 @@
 package p1.nd.khan.jubair.mohammadd.popularmovies;
 
 import android.app.Activity;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -42,23 +43,18 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
     private ArrayList<String> mMovieUrls;
     private CustomImageAdapter mMovieAdapter;
     private String mSortOrder;
-
-    // define static to avoid calling MDB URL for state change and while returning back to main fragment from detail fragment.
-    private static ArrayList<MdbMovie> mdbMovies = new ArrayList<>();
-    private static String SORT_ORDER = "NA";
-    private static boolean mRestoredState;
-
-    public static final String SORT_ORDER_POPULARITY = "popularity.desc";
-    public static final String SORT_ORDER_RATING = "vote_average.desc";
+    private SharedPreferences mPrefs;
+    private ArrayList<MdbMovie> mdbMovies = new ArrayList<>();
+    private boolean mRestoredState;
 
     OnMoviePosterSelectedListener mCallback;
 
     public MainActivityFragment() {
     }
 
-    // Container Activity must implement this interface
-    //http://developer.android.com/training/basics/fragments/communicating.html
-    //Communicating with Other Fragments
+    /* Container Activity must implement this interface
+       http://developer.android.com/training/basics/fragments/communicating.html
+       Communicating with Other Fragments*/
     public interface OnMoviePosterSelectedListener {
         void onMoviePosterSelected(MdbMovie mdbMovies);
     }
@@ -70,6 +66,7 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
         // the callback interface. If not, it throws an exception
         try {
             mCallback = (OnMoviePosterSelectedListener) activity;
+            //Log.v(LOG_TAG, "=== onAttach.");
         } catch (ClassCastException e) {
             throw new ClassCastException(activity.toString()
                     + " Must implement onMoviePosterSelected.");
@@ -80,6 +77,7 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
     public void onDetach() {
         super.onDetach();
         mCallback = null;
+        //Log.v(LOG_TAG, "=== onDetach.");
     }
 
 
@@ -91,40 +89,34 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
 
         if (savedInstanceState != null) {
             mdbMovies = (ArrayList<MdbMovie>) savedInstanceState.get("movie_stored");
-            mSortOrder = savedInstanceState.getString("sort_mode");
-            Log.i(LOG_TAG, "savedInstanceState - mdbMovies:" + mdbMovies.size() + ",mSortOrder:" + mSortOrder);
+            //Log.i(LOG_TAG, "savedInstanceState - mdbMovies:" + mdbMovies.size());
             mRestoredState = true;
-        } else {
-            Log.i(LOG_TAG, "Restored Bundle savedInstanceState is null");
-        }
+        } /*else {
+            Log.v(LOG_TAG, "Restored Bundle savedInstanceState is null");
+        }*/
 
-        //set default sort order as popularity.desc
-        if (mSortOrder == null || mSortOrder.length() == 0) mSortOrder = SORT_ORDER_POPULARITY;
-
-        //Start fetching the records from MDB!
+        mPrefs = getActivity().getPreferences(0);
+        mSortOrder = mPrefs.getString(getString(R.string.pref_sort_order_key), getString(R.string.SORT_ORDER_POPULARITY));
+        //Log.v(LOG_TAG, "mPrefs:mSortOrder-"+mSortOrder);
         getMovieFromNet(mSortOrder);
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        Log.d(LOG_TAG, "== onPause.");
+        //Log.v(LOG_TAG, "== onPause.");
+        SharedPreferences.Editor editor = mPrefs.edit();
+        editor.putString("sort_mode", mSortOrder);
+        editor.apply();
     }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
         // Always call the superclass so it can save the view hierarchy state
         super.onSaveInstanceState(outState);
-
         // Save the movie's current state
         outState.putParcelableArrayList("movie_stored", mdbMovies);
-        outState.putString("sort_mode", mSortOrder);
-
-        // store the old sort order
-        SORT_ORDER = mSortOrder;
-        mRestoredState = true;
-
-        Log.d(LOG_TAG, "== onSaveInstanceState.");
+        //Log.d(LOG_TAG, "== onSaveInstanceState.");
     }
 
     @Override
@@ -138,22 +130,20 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        Log.i(LOG_TAG, "selected option:" + item.getItemId());
+        //Log.v(LOG_TAG, "selected option:" + item.getItemId());
         switch (item.getItemId()) {
             case R.id.action_sort_by_popular:
                 item.setChecked(true);
-                mSortOrder = SORT_ORDER_POPULARITY;
+                mSortOrder = getString(R.string.SORT_ORDER_POPULARITY);
                 getMovieFromNet(mSortOrder);
-                return true;
+                break;
             case R.id.action_sort_by_rating:
                 item.setChecked(true);
-                mSortOrder = SORT_ORDER_RATING;
-                getMovieFromNet(SORT_ORDER_RATING);
-                return true;
-            default:
-                mSortOrder = SORT_ORDER_POPULARITY;
-                return super.onOptionsItemSelected(item);
+                mSortOrder = getString(R.string.SORT_ORDER_RATING);
+                getMovieFromNet(mSortOrder);
+                break;
         }
+        return super.onOptionsItemSelected(item);
     }
 
     /**
@@ -162,22 +152,16 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
      * @param sortOrder to fetch the movie details from MDB.
      */
     private void getMovieFromNet(String sortOrder) {
-
-        Log.i(LOG_TAG, "SORT_ORDER:" + SORT_ORDER + ",mSortOrder:" + mSortOrder);
-        if (SORT_ORDER.equals(mSortOrder)) {
-            Log.i(LOG_TAG, "SORT_ORDER && mSortOrder are same!");
-        } else {
-            //to avoid making unnecessary URL call, since sort order is not changed
-            // fix the issue of making URL call when clicking back from detail page to main page
+        //Log.v(LOG_TAG, "SORT_ORDER:" + SORT_ORDER + ",sortOrder:" + sortOrder);
+        // onSaveInstanceState: state is stored, URL call not required.
+        if (!mRestoredState) {
             if (Utility.isNetworkAvailable(getActivity())) {
-                Log.v(LOG_TAG, "== Getting Movies from the Internet.");
+                //Log.v(LOG_TAG, "== Getting Movies from the Internet.");
                 // Get Movie from Internet
                 FetchMovieTask fetchMoviesTask = new FetchMovieTask();
                 fetchMoviesTask.execute(sortOrder);
-                //update sort order to avoid making URL call un-till sort order is not changed
-                SORT_ORDER = sortOrder;
             } else {
-                Log.w(LOG_TAG, "== No Internet Connection");
+                //Log.w(LOG_TAG, "== No Internet Connection");
                 Toast.makeText(getActivity(), "No Internet Connection.", Toast.LENGTH_SHORT).show();
             }
         }
@@ -188,8 +172,6 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
                              Bundle savedInstanceState) {
 
         final View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-
-        Log.i(LOG_TAG, "== onCreateView, mdbMovies:" + mdbMovies.size() + ",mRestoredState:" + mRestoredState);
 
         mMovieUrls = new ArrayList<>();
         mMovieAdapter = new CustomImageAdapter(mMovieUrls);
@@ -220,19 +202,16 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
-
-            // Log.v(LOG_TAG, "CustomImageAdapter:");
             if (convertView == null) {
                 convertView = getActivity().getLayoutInflater()
                         .inflate(R.layout.list_item_movie_poster, parent, false);
             }
-            //ImageView imageView = (ImageView) convertView;
             ImageView imageView = (ImageView) convertView.findViewById(R.id.movie_poster_image);
             imageView.setAdjustViewBounds(true); //Adjust its bound to max while Preserve the aspect ratio of Image
 
             // Download Image from TMDB
             Picasso.with(getActivity())
-                    .load("http://image.tmdb.org/t/p/w185" + getItem(position))
+                    .load(getString(R.string.POSTER_IMAGE_URL) + getItem(position))
                     .into(imageView);
 
             return convertView;
@@ -307,7 +286,7 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
                         .appendQueryParameter(PAGE, Integer.toString(page))
                         .build();
 
-                Log.v(LOG_TAG, "URL:" + builtUri.toString());
+                //Log.v(LOG_TAG, "URL:" + builtUri.toString());
 
                 URL url = new URL(builtUri.toString());
 
@@ -337,7 +316,7 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
 
                 if (buffer.length() == 0) {
                     // Stream was empty.  No point in parsing.
-                    Log.w(LOG_TAG, "Stream was empty!");
+                    //Log.w(LOG_TAG, "Stream was empty!");
                     return null;
                 }
                 forecastJsonStr = buffer.toString();

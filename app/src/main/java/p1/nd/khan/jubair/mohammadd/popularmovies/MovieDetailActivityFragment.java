@@ -3,7 +3,6 @@ package p1.nd.khan.jubair.mohammadd.popularmovies;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -35,7 +34,7 @@ import butterknife.ButterKnife;
 
 public class MovieDetailActivityFragment extends Fragment {
 
-    private final String LOG_TAG = MovieDetailActivityFragment.class.getSimpleName();
+    //private final String LOG_TAG = MovieDetailActivityFragment.class.getSimpleName();
 
     @Bind(R.id.backdrop)
     ImageView mBackdropPath;
@@ -58,7 +57,7 @@ public class MovieDetailActivityFragment extends Fragment {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        Log.v(LOG_TAG, "=== onCreate");
+        //Log.v(LOG_TAG, "=== onCreate");
         super.onCreate(savedInstanceState);
     }
 
@@ -66,7 +65,7 @@ public class MovieDetailActivityFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        Log.v(LOG_TAG, "=== onCreateView");
+        //Log.v(LOG_TAG, "=== onCreateView");
         rootView = inflater.inflate(R.layout.fragment_movie_detail, container, false);
         Intent intent = getActivity().getIntent();
         if (intent != null) {
@@ -79,16 +78,16 @@ public class MovieDetailActivityFragment extends Fragment {
     //http://jakewharton.github.io/butterknife/
     public void DrawMovieDetailsFragment(MdbMovie movieDetails) {
 
-        Log.v(LOG_TAG, "=== DrawMovieDetailsFragment:" + movieDetails.getTitle());
+        //Log.v(LOG_TAG, "=== DrawMovieDetailsFragment:" + movieDetails.getTitle());
         ButterKnife.bind(this, rootView);
-        final String tmdb_poster_url = "http://image.tmdb.org/t/p/w185";
+        //final String tmdb_poster_url = "http://image.tmdb.org/t/p/w185";
         mBackdropPath.setScaleType(ImageView.ScaleType.FIT_XY);
         Picasso.with(getActivity())
-                .load(tmdb_poster_url + movieDetails.getBackdropPath())
+                .load(getString(R.string.BACK_DROP_IMAGE_URL) + movieDetails.getBackdropPath())
                 .into(mBackdropPath);
 
         Picasso.with(getActivity())
-                .load(tmdb_poster_url + movieDetails.getPosterUrl())
+                .load(getString(R.string.POSTER_IMAGE_URL) + movieDetails.getPosterUrl())
                 .into(mPosterUrl);
 
         mTitle.setText(movieDetails.getTitle());
@@ -100,7 +99,8 @@ public class MovieDetailActivityFragment extends Fragment {
     /*Fragments have a different view lifecycle than activities. When binding a fragment in onCreateView, set
     the views to null in onDestroyView. Butter Knife has an unbind method to do this automatically.*/
 
-    @Override public void onDestroyView() {
+    @Override
+    public void onDestroyView() {
         super.onDestroyView();
         ButterKnife.unbind(this);
     }

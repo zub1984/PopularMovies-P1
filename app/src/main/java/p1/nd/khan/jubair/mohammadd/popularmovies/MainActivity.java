@@ -3,13 +3,12 @@ package p1.nd.khan.jubair.mohammadd.popularmovies;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
 public class MainActivity extends AppCompatActivity implements MainActivityFragment.OnMoviePosterSelectedListener {
 
-    public final String LOG_TAG = MainActivity.class.getSimpleName();
+    //public final String LOG_TAG = MainActivity.class.getSimpleName();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,9 +31,9 @@ public class MainActivity extends AppCompatActivity implements MainActivityFragm
     // The user selected the movie poster from the MainActivityFragment
     // Send movie details to MovieDetailActivityFragment for display.
     public void onMoviePosterSelected(MdbMovie mdbMovies) {
-        Log.i(LOG_TAG, "===onMoviePosterSelected:" + mdbMovies.getTitle());
+        //Log.v(LOG_TAG, "===onMoviePosterSelected:" + mdbMovies.getTitle());
         Intent intent = new Intent(this, MovieDetailActivity.class);
-        intent.putExtra("movieparcel", mdbMovies);
+        intent.putExtra(getString(R.string.MOVIE_PARCEL), mdbMovies);
         startActivity(intent);
     }
 }

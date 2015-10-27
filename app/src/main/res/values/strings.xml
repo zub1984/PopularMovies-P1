@@ -4,7 +4,7 @@
          Used in Action Bar, and in AndroidManifest to tell the device the name of this app.
          It's to keep this short.
     -->
-    <string name="app_name">PopularMovies</string>
+    <string name="app_name">Popular Movies</string>
 
 
     <!-- Menu label to fetch updated movies information from the server -->
@@ -28,10 +28,17 @@
     <string name="PERSONAL_API_KEY">[PERSONAL_API_KEY]</string>
 
     <string name="MDB_POPULAR_MOVIE_URL">http://api.themoviedb.org/3/discover/movie?</string>
+    <string name="POSTER_IMAGE_URL">http://image.tmdb.org/t/p/w185</string>
+    <string name="BACK_DROP_IMAGE_URL">http://image.tmdb.org/t/p/w342</string>
+
+
     <string name="MOVIE_PARCEL">movieparcel</string>
 
-
     <!-- themoviedb.org : Parameter details requires for PopularMovies App -->
+
+    <string name="pref_sort_order_key" translatable="false">sort_mode</string>
+    <string name="SORT_ORDER_POPULARITY" translatable="false">popularity.desc</string>
+    <string name="SORT_ORDER_RATING" translatable="false">vote_average.desc</string>
 
 
 </resources>
