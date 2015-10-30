@@ -1,108 +1,117 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:weightSum="5"
     tools:context="p1.nd.khan.jubair.mohammadd.popularmovies.MovieDetailActivityFragment">
-
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="2">
-
-        <ImageView
-            android:id="@+id/backdrop"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_above="@+id/original_title"
-            android:background="#cccccc" />
-
-        <ImageView
-            android:id="@+id/poster"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:background="@android:color/background_dark"
-            android:scaleType="fitStart"
-            android:theme="@style/AppTheme" />
-
-        <TextView
-            android:id="@+id/original_title"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_above="@+id/poster"
-            android:layout_alignParentEnd="true"
-            android:layout_alignParentRight="true"
-            android:text="Original Title"
-            android:textSize="20sp"
-            android:textStyle="bold" />
-    </RelativeLayout>
-
-    <RelativeLayout
-        android:layout_width="wrap_content"
-        android:layout_height="0dp"
-        android:layout_weight="0.5">
-
-        <TextView
-            android:id="@+id/rating"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentRight="true"
-            android:padding="5dp"
-            android:text="x/10"
-            android:textSize="16sp" />
-
-        <RatingBar
-            android:id="@+id/ratingBar"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentTop="true"
-            android:layout_toLeftOf="@+id/rating"
-            android:layout_toStartOf="@+id/rating"
-            android:numStars="1"
-            android:paddingEnd="7dp"
-            android:maxWidth="2dp"
-            android:maxHeight="1dp" />
-
-        <TextView
-            android:id="@+id/release_date"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:padding="5dp"
-            android:text="Release Date"
-            android:textSize="24sp" />
-    </RelativeLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="2.5"
+        android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/overview_level"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignBottom="@id/release_date"
-            android:padding="7dp"
-            android:scrollbars="vertical"
-            android:text="Overview"
-            android:textSize="24sp" />
-
-        <View
+        <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="@android:color/darker_gray"></View>
+            android:layout_height="wrap_content">
 
-        <TextView
-            android:id="@+id/overview"
+            <ImageView
+                android:id="@+id/backdrop"
+                android:layout_width="match_parent"
+                android:layout_height="180dp"
+                android:contentDescription="@string/backdrop_image_description"
+                android:scaleType="centerCrop" />
+
+            <TextView
+                android:id="@+id/original_title"
+                style="@style/movieTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:layout_centerInParent="true" />
+
+            <ImageView
+                android:id="@+id/poster"
+                android:layout_width="wrap_content"
+                android:layout_height="140dp"
+                android:layout_alignBottom="@id/backdrop"
+                android:layout_alignLeft="@id/backdrop"
+                android:contentDescription="@string/image_poster_description"
+                android:scaleType="fitStart"
+                android:theme="@style/AppTheme" />
+
+        </RelativeLayout>
+
+        <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_alignBottom="@id/release_date"
-            android:padding="7dp"
-            android:scrollbars="vertical"
-            android:text="Movie details and overview!."
-            android:textSize="16sp" />
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/release_date"
+                style="@style/movieSubHeading"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingLeft="5dp"
+                android:text="@string/release_date" />
+
+            <TextView
+                android:id="@+id/rating"
+                style="@style/movieSubHeading"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentRight="true"
+                android:paddingRight="5dp"
+                android:text="@string/rating_out_of_ten" />
+
+            <ImageView
+                android:id="@+id/ratingStar"
+                style="@style/ratingStar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toLeftOf="@+id/rating"
+                android:layout_toStartOf="@+id/rating"
+                android:contentDescription="@string/rating_image" />
+
+        </RelativeLayout>
     </LinearLayout>
-</LinearLayout>
+
+    <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:paddingTop="200dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/overview_level"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignBottom="@id/release_date"
+                android:padding="5dp"
+                android:scrollbars="vertical"
+                android:text="Overview"
+                android:textSize="24sp" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@android:color/darker_gray"></View>
+
+            <TextView
+                android:id="@+id/overview"
+                style="@style/movieBodyText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignBottom="@id/release_date"
+                android:paddingBottom="5dp"
+                android:paddingLeft="5dp"
+                android:paddingRight="5dp"
+                android:paddingTop="7dp"/>
+        </LinearLayout>
+    </ScrollView>
+
+</FrameLayout>

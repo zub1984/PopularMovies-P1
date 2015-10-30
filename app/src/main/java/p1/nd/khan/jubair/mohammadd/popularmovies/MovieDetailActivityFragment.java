@@ -50,6 +50,9 @@ public class MovieDetailActivityFragment extends Fragment {
     @Bind(R.id.rating)
     TextView mUserRating;
 
+    @Bind(R.id.ratingStar)
+    ImageView mRatingStar;
+
     View rootView;
 
     public MovieDetailActivityFragment() {
@@ -90,9 +93,15 @@ public class MovieDetailActivityFragment extends Fragment {
                 .load(getString(R.string.POSTER_IMAGE_URL) + movieDetails.getPosterUrl())
                 .into(mPosterUrl);
 
+        Picasso.with(getActivity())
+                .load(R.drawable.ic_star_rate_black_18dp)
+                .into(mRatingStar);
+
+        final String ratingStr="/10";
+
         mTitle.setText(movieDetails.getTitle());
         mOverview.setText(movieDetails.getOverview());
-        mUserRating.setText(movieDetails.getUserRating());
+        mUserRating.setText(movieDetails.getUserRating()+ratingStr);
         mReleaseDate.setText(movieDetails.getReleaseDate());
     }
 
