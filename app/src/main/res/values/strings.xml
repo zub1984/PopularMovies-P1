@@ -12,7 +12,7 @@
     <string name="action_sort_by_rating" translatable="false">Ratings</string>
 
     <string name="action_settings">Settings</string>
-    <string name="title_activity_movie_detail">MovieDetails</string>
+    <string name="title_activity_movie_detail">Movie Details</string>
 
     <!-- themoviedb.org : Parameter details requires for PopularMovies App -->
     <string name="MDB_REQ_RESULTS">results</string>
@@ -41,7 +41,7 @@
     <string name="SORT_ORDER_RATING" translatable="false">vote_average.desc</string>
     <string name="backdrop_image_description">Back drop image of movie.</string>
     <string name="image_poster_description">image poster</string>
-    <string name="release_date">Release Date</string>
+    <string name="release_date">Release Date,</string>
     <string name="rating_out_of_ten">x/10</string>
     <string name="rating_image">Rating Image</string>
 

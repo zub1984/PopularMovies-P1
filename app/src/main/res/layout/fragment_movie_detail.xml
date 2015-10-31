@@ -45,11 +45,20 @@
             android:layout_height="wrap_content">
 
             <TextView
-                android:id="@+id/release_date"
+                android:id="@+id/release_date_level"
                 style="@style/movieSubHeading"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:paddingLeft="5dp"
+                android:text="@string/release_date" />
+
+            <TextView
+                android:id="@+id/release_date"
+                style="@style/movieSubHeading"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toRightOf="@+id/release_date_level"
+                android:layout_toEndOf="@+id/release_date_level"
                 android:text="@string/release_date" />
 
             <TextView
@@ -70,7 +79,6 @@
                 android:layout_toLeftOf="@+id/rating"
                 android:layout_toStartOf="@+id/rating"
                 android:contentDescription="@string/rating_image" />
-
         </RelativeLayout>
     </LinearLayout>
 
@@ -78,7 +86,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipToPadding="false"
-        android:paddingTop="200dp">
+        android:paddingTop="210dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -86,11 +94,11 @@
             android:layout_weight="1"
             android:orientation="vertical">
 
-            <TextView
+           <TextView
                 android:id="@+id/overview_level"
+               style="?android:attr/textAppearanceLarge"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignBottom="@id/release_date"
                 android:padding="5dp"
                 android:scrollbars="vertical"
                 android:text="Overview"
@@ -106,7 +114,6 @@
                 style="@style/movieBodyText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_alignBottom="@id/release_date"
                 android:paddingBottom="5dp"
                 android:paddingLeft="5dp"
                 android:paddingRight="5dp"

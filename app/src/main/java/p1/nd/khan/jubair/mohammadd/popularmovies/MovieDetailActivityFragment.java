@@ -102,7 +102,7 @@ public class MovieDetailActivityFragment extends Fragment {
         mTitle.setText(movieDetails.getTitle());
         mOverview.setText(movieDetails.getOverview());
         mUserRating.setText(movieDetails.getUserRating()+ratingStr);
-        mReleaseDate.setText(movieDetails.getReleaseDate());
+        mReleaseDate.setText(Utility.formatReleaseDate(movieDetails.getReleaseDate()));
     }
 
     /*Fragments have a different view lifecycle than activities. When binding a fragment in onCreateView, set

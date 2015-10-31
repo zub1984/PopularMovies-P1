@@ -9,7 +9,13 @@ import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+
 public class Utility {
+
+    private static final SimpleDateFormat DATE_FORMAT_MDB = new SimpleDateFormat("yyyy-MM-dd");
+    private static final SimpleDateFormat DATE_FORMAT_MONTH_YEAR = new SimpleDateFormat("MMMM yyyy");
 
     //http://stackoverflow.com/questions/4238921/detect-whether-there-is-an-internet-connection-available-on-android
     public static boolean isNetworkAvailable(Activity activity) {
@@ -24,6 +30,21 @@ public class Utility {
         ConnectivityManager connManager = (ConnectivityManager) activity.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo mWifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
         return mWifi.isConnected();
+    }
+
+    public static String formatReleaseDate(String releaseDate) {
+        String result;
+        if (releaseDate != null && !releaseDate.trim().isEmpty()) {
+            try {
+                result = DATE_FORMAT_MONTH_YEAR.format(DATE_FORMAT_MDB.parse(releaseDate));
+            } catch (ParseException e) {
+
+                result = "unknown_release_date";
+            }
+        } else {
+            result = "unknown_release_date";
+        }
+        return result;
     }
 
 }
