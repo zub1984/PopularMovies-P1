@@ -10,9 +10,6 @@
         android:layout_height="match_parent"
         android:columnWidth="@dimen/poster_width"
         android:gravity="center"
-        android:horizontalSpacing="5dp"
         android:numColumns="auto_fit"
-        android:paddingLeft="5dp"
-        android:paddingRight="5dp"
         android:stretchMode="columnWidth"/>
 </FrameLayout>

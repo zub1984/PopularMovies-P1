@@ -3,7 +3,6 @@ package p1.nd.khan.jubair.mohammadd.popularmovies;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -18,18 +17,17 @@ import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.squareup.okhttp.Callback;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
 import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
 
 
@@ -142,14 +140,67 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
      */
     private void getMovieFromNet(String sortOrder) {
         // onSaveInstanceState: state is stored, URL call not required.
+        Log.i(LOG_TAG, "==getMovieFromNet: " + sortOrder);
         if (!mRestoredState) {
             if (Utility.isNetworkAvailable(getActivity())) {
                 // Get Movie from Internet
-                FetchMovieTask fetchMoviesTask = new FetchMovieTask();
-                fetchMoviesTask.execute(sortOrder);
+                //FetchMovieTask fetchMoviesTask = new FetchMovieTask();
+                //fetchMoviesTask.execute(sortOrder);
+                OkHttpClientRequestHandler(sortOrder, 1);
             } else {
                 Toast.makeText(getActivity(), "No Internet Connection.", Toast.LENGTH_SHORT).show();
             }
+        }
+    }
+
+    /**
+     * OkHttpClientRequestHandler, to make ok http request to //http://api.themoviedb.org/3/discover/movie
+     * http://square.github.io/okhttp/
+     *
+     * @param pSortOrder : user preferred order for movie display.
+     * @param pPageNo    : page number to fetch the record.
+     */
+    private void OkHttpClientRequestHandler(String pSortOrder, int pPageNo) {
+        {
+            OkHttpClient client = new OkHttpClient();
+            Request request = new Request.Builder()
+                    .url(UrlFormatter(pSortOrder, pPageNo))
+                    .build();
+            client.newCall(request).enqueue(new Callback() {
+                @Override
+                public void onFailure(Request request, IOException e) {
+                    Log.e(LOG_TAG, "==onFailure:", e);
+                }
+
+                @Override
+                public void onResponse(Response response) throws IOException {
+                    try {
+                        String jsonData = response.body().string();
+                        if (response.isSuccessful()) {
+                            mdbMovies = getMovieDataFromJson(jsonData);
+                            if (getActivity() != null) {
+                                getActivity().runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        if (mdbMovies != null && mdbMovies.size() > 0) {
+                                            mMovieUrls.clear();
+                                            for (MdbMovie aMovie : mdbMovies) {
+                                                // Store movie poster URL into Adapter
+                                                mMovieUrls.add(aMovie.getPosterUrl());
+                                            }
+                                            mMovieAdapter.notifyDataSetChanged();
+                                        } else {
+                                            Toast.makeText(getActivity(), "Failed to load poster image in list.", Toast.LENGTH_SHORT).show();
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                    } catch (IOException | JSONException e) {
+                        Log.e(LOG_TAG, "IOException | JSONException: Exception caught: ", e);
+                    }
+                }
+            });
         }
     }
 
@@ -204,146 +255,54 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
         }
     }
 
-    // Fetch movie details from MDB
-    public class FetchMovieTask extends AsyncTask<String, Void, ArrayList<MdbMovie>> {
+    // Construct the URL for the Movies query
+    //http://api.themoviedb.org/3/discover/movie?sort_by=popularity.desc&api_key=PERSONAL_API_KEY&page=1
 
-        /**
-         * Take the String representing the complete response from MDB in JSON Format and
-         * pull out the data we need.
-         */
+    /**
+     * Format and prepare the required URL for MDB request
+     *
+     * @param pSortOrder : user preferred order for movie display.
+     * @param pPageNo    : page number to fetch the record.
+     */
+    private String UrlFormatter(String pSortOrder, int pPageNo) {
+        final String SORT_BY = "sort_by";
+        final String API_KEY = "api_key";
+        final String PAGE = "page";
+        Uri builtUri = Uri.parse(getString(R.string.MDB_POPULAR_MOVIE_URL)).buildUpon()
+                .appendQueryParameter(SORT_BY, pSortOrder)
+                .appendQueryParameter(API_KEY, getString(R.string.PERSONAL_API_KEY))
+                .appendQueryParameter(PAGE, Integer.toString(pPageNo))
+                .build();
+        return builtUri.toString();
+    }
 
-        private ArrayList<MdbMovie> getMovieDataFromJson(String mdbJsonStr)
-                throws JSONException {
-            // The name of the JSON objects that need to be extracted.
-
-            JSONObject mdbMovieJson = new JSONObject(mdbJsonStr);
-            JSONArray moviesArray = mdbMovieJson.getJSONArray(getString(R.string.MDB_REQ_RESULTS));
-
-            // Must clear the list before adding new
-            mdbMovies.clear();
-
-            for (int i = 0; i < moviesArray.length(); i++) {
-                // Get the JSON object representing the movie
-                JSONObject movieAttributes = moviesArray.getJSONObject(i);
-                // Create a MdbMovie object then add to ArrayList of Movies
-                // read movie attributes from JSONObject.
-                //Log.v(LOG_TAG, "MDB Response: " + movieAttributes.getString(MDB_ORIGINAL_TITLE));
-                MdbMovie movieObj = new MdbMovie(movieAttributes.getString(getString(R.string.MDB_BACKDROP_PATH)),
-                        movieAttributes.getString(getString(R.string.MDB_MOVIE_ID)),
-                        movieAttributes.getString(getString(R.string.MDB_ORIGINAL_TITLE)),
-                        movieAttributes.getString(getString(R.string.MDB_OVERVIEW)),
-                        movieAttributes.getString(getString(R.string.MDB_POSTER_IMAGE)),
-                        movieAttributes.getString(getString(R.string.MDB_RELEASE_DATE)),
-                        movieAttributes.getString(getString(R.string.MDB_VOTE_AVERAGE)),
-                        movieAttributes.getString(getString(R.string.MDB_VOTE_COUNT)));
-
-                mdbMovies.add(movieObj);
-            }
-            return mdbMovies;
+    /**
+     * Take the String representing the complete response from MDB in JSON Format and
+     * pull out the data we need.
+     *
+     * @param mdbJsonStr : JSON string response
+     */
+    private ArrayList<MdbMovie> getMovieDataFromJson(String mdbJsonStr)
+            throws JSONException {
+        // The name of the JSON objects that need to be extracted.
+        JSONObject mdbMovieJson = new JSONObject(mdbJsonStr);
+        JSONArray moviesArray = mdbMovieJson.getJSONArray(getString(R.string.MDB_REQ_RESULTS));
+        // Must clear the list before adding new
+        mdbMovies.clear();
+        for (int i = 0; i < moviesArray.length(); i++) {
+            // Get the JSON object representing the movie
+            JSONObject movieAttributes = moviesArray.getJSONObject(i);
+            // Read movie attributes from JSONObject and add to Movie List.
+            MdbMovie movieObj = new MdbMovie(movieAttributes.getString(getString(R.string.MDB_BACKDROP_PATH)),
+                    movieAttributes.getString(getString(R.string.MDB_MOVIE_ID)),
+                    movieAttributes.getString(getString(R.string.MDB_ORIGINAL_TITLE)),
+                    movieAttributes.getString(getString(R.string.MDB_OVERVIEW)),
+                    movieAttributes.getString(getString(R.string.MDB_POSTER_IMAGE)),
+                    movieAttributes.getString(getString(R.string.MDB_RELEASE_DATE)),
+                    movieAttributes.getString(getString(R.string.MDB_VOTE_AVERAGE)),
+                    movieAttributes.getString(getString(R.string.MDB_VOTE_COUNT)));
+            mdbMovies.add(movieObj);
         }
-
-        @Override
-        protected ArrayList<MdbMovie> doInBackground(String... params) {
-
-            if (params == null) {
-                Toast.makeText(getActivity(), "Sort order not defined!", Toast.LENGTH_SHORT).show();
-            }
-
-            // These two need to be declared outside the try/catch
-            // so that they can be closed in the finally block.
-            HttpURLConnection urlConnection = null;
-            BufferedReader reader = null;
-
-            // Will contain the raw JSON response as a string.
-            String forecastJsonStr = null;
-            int page = 1;
-
-            try {
-                // Construct the URL for the TMDB Movies query
-                //http://api.themoviedb.org/3/discover/movie?sort_by=popularity.desc&api_key=PERSONAL_API_KEY&page=1
-
-                final String SORT_BY = "sort_by";
-                final String API_KEY = "api_key";
-                final String PAGE = "page";
-
-                Uri builtUri = Uri.parse(getString(R.string.MDB_POPULAR_MOVIE_URL)).buildUpon()
-                        .appendQueryParameter(SORT_BY, params[0])
-                        .appendQueryParameter(API_KEY, getString(R.string.PERSONAL_API_KEY))
-                        .appendQueryParameter(PAGE, Integer.toString(page))
-                        .build();
-
-                URL url = new URL(builtUri.toString());
-
-                //Log.v(LOG_TAG, "Built URI " + builtUri.toString());
-                //Create the request to themoviedb.org, and open the connection
-                urlConnection = (HttpURLConnection) url.openConnection();
-                urlConnection.setRequestMethod("GET");
-                urlConnection.connect();
-
-                // Read the input stream into a String
-                InputStream inputStream = urlConnection.getInputStream();
-                StringBuilder buffer = new StringBuilder();
-                if (inputStream == null) {
-                    // Nothing to do.
-                    return null;
-                }
-                reader = new BufferedReader(new InputStreamReader(inputStream));
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    // Since it's JSON, adding a newline isn't necessary (it won't affect parsing)
-                    // But it does make debugging a *lot* easier if you print out the completed
-                    // buffer for debugging.
-                    buffer.append(line);
-                }
-
-                if (buffer.length() == 0) {
-                    // Stream was empty.  No point in parsing.
-                    return null;
-                }
-                forecastJsonStr = buffer.toString();
-
-            } catch (NullPointerException e) {
-                Log.e(LOG_TAG, "Error ", e);
-                // sort order is not passed.
-                return null;
-            } catch (IOException e) {
-                Log.e(LOG_TAG, "Error ", e);
-                // didn't got the response, there's no point in attempting to parse it.
-                return null;
-            } finally {
-                if (urlConnection != null) {
-                    urlConnection.disconnect();
-                }
-                if (reader != null) {
-                    try {
-                        reader.close();
-                    } catch (final IOException e) {
-                        Log.e(LOG_TAG, "Error closing stream", e);
-                    }
-                }
-            }
-            // Function to format the JSON response from MDB
-            try {
-                return getMovieDataFromJson(forecastJsonStr);
-            } catch (JSONException e) {
-                Log.e(LOG_TAG, " MDB Response cannot be converted to JSONObject" + e.getMessage(), e);
-            }
-            return null;
-        }
-
-        //New data is back from the server.  Hooray!
-        @Override
-        protected void onPostExecute(ArrayList<MdbMovie> movies) {
-            if (movies != null && movies.size() > 0) {
-                mMovieUrls.clear();
-                for (MdbMovie aMovie : movies) {
-                    // Store movie poster URL into Adapter
-                    mMovieUrls.add(aMovie.getPosterUrl());
-                }
-                mMovieAdapter.notifyDataSetChanged();
-            } else {
-                Toast.makeText(getActivity(), "onPostExecute: No Response from MDB", Toast.LENGTH_SHORT).show();
-            }
-        }
+        return mdbMovies;
     }
 }
