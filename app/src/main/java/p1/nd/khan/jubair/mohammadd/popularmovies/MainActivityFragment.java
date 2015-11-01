@@ -34,6 +34,20 @@ import java.util.ArrayList;
 /**
  * A placeholder fragment containing a simple view.
  */
+/*Copyright 2014 Square, Inc.
+
+        Licensed under the Apache License, Version 2.0 (the "License");
+        you may not use this file except in compliance with the License.
+        You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+        Unless required by applicable law or agreed to in writing, software
+        distributed under the License is distributed on an "AS IS" BASIS,
+        WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+        See the License for the specific language governing permissions and
+        limitations under the License.*/
+
 public class MainActivityFragment extends Fragment implements AbsListView.OnItemClickListener {
 
 
@@ -139,13 +153,10 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
      * @param sortOrder to fetch the movie details from MDB.
      */
     private void getMovieFromNet(String sortOrder) {
-        // onSaveInstanceState: state is stored, URL call not required.
-        Log.i(LOG_TAG, "==getMovieFromNet: " + sortOrder);
+        // onSaveInstanceState: state is stored, URL call not required when mRestoredState=true.
         if (!mRestoredState) {
             if (Utility.isNetworkAvailable(getActivity())) {
                 // Get Movie from Internet
-                //FetchMovieTask fetchMoviesTask = new FetchMovieTask();
-                //fetchMoviesTask.execute(sortOrder);
                 OkHttpClientRequestHandler(sortOrder, 1);
             } else {
                 Toast.makeText(getActivity(), "No Internet Connection.", Toast.LENGTH_SHORT).show();
@@ -156,6 +167,8 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
     /**
      * OkHttpClientRequestHandler, to make ok http request to //http://api.themoviedb.org/3/discover/movie
      * http://square.github.io/okhttp/
+     * http://stackoverflow.com/questions/16902716/comparison-of-android-networking-libraries-okhttp-retrofit-volley
+     * Note :Planned to implement retrofit for stage:2
      *
      * @param pSortOrder : user preferred order for movie display.
      * @param pPageNo    : page number to fetch the record.
@@ -223,7 +236,6 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
 
         // Get a reference to the ListView, and attach this adapter to it.
         GridView mGridView = (GridView) rootView.findViewById(R.id.movie_list_gridview);
-        //set adaptor
         mGridView.setAdapter(mMovieAdapter);
         // Set OnItemClickListener so we can be notified on item clicks
         mGridView.setOnItemClickListener(this);
