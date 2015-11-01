@@ -1,6 +1,6 @@
 package p1.nd.khan.jubair.mohammadd.popularmovies;
 
-import android.app.Activity;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -60,16 +60,14 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
     }
 
     @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
+    public void onAttach(Context context) {
+        super.onAttach(context);
         // This makes sure that the container activity has implemented
         // the callback interface. If not, it throws an exception
         try {
-            mCallback = (OnMoviePosterSelectedListener) activity;
-            //Log.v(LOG_TAG, "=== onAttach.");
+            mCallback = (OnMoviePosterSelectedListener) context;
         } catch (ClassCastException e) {
-            throw new ClassCastException(activity.toString()
-                    + " Must implement onMoviePosterSelected.");
+            throw new ClassCastException(context.toString() + " Must implement onMoviePosterSelected.");
         }
     }
 
@@ -77,7 +75,6 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
     public void onDetach() {
         super.onDetach();
         mCallback = null;
-        //Log.v(LOG_TAG, "=== onDetach.");
     }
 
 
@@ -89,22 +86,16 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
 
         if (savedInstanceState != null) {
             mdbMovies = (ArrayList<MdbMovie>) savedInstanceState.get("movie_stored");
-            //Log.i(LOG_TAG, "savedInstanceState - mdbMovies:" + mdbMovies.size());
             mRestoredState = true;
-        } /*else {
-            Log.v(LOG_TAG, "Restored Bundle savedInstanceState is null");
-        }*/
-
+        }
         mPrefs = getActivity().getPreferences(0);
         mSortOrder = mPrefs.getString(getString(R.string.pref_sort_order_key), getString(R.string.SORT_ORDER_POPULARITY));
-        //Log.v(LOG_TAG, "mPrefs:mSortOrder-"+mSortOrder);
         getMovieFromNet(mSortOrder);
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        //Log.v(LOG_TAG, "== onPause.");
         SharedPreferences.Editor editor = mPrefs.edit();
         editor.putString("sort_mode", mSortOrder);
         editor.apply();
@@ -116,7 +107,6 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
         super.onSaveInstanceState(outState);
         // Save the movie's current state
         outState.putParcelableArrayList("movie_stored", mdbMovies);
-        //Log.d(LOG_TAG, "== onSaveInstanceState.");
     }
 
     @Override
@@ -130,7 +120,6 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        //Log.v(LOG_TAG, "selected option:" + item.getItemId());
         switch (item.getItemId()) {
             case R.id.action_sort_by_popular:
                 item.setChecked(true);
@@ -152,16 +141,13 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
      * @param sortOrder to fetch the movie details from MDB.
      */
     private void getMovieFromNet(String sortOrder) {
-        //Log.v(LOG_TAG, "SORT_ORDER:" + SORT_ORDER + ",sortOrder:" + sortOrder);
         // onSaveInstanceState: state is stored, URL call not required.
         if (!mRestoredState) {
             if (Utility.isNetworkAvailable(getActivity())) {
-                //Log.v(LOG_TAG, "== Getting Movies from the Internet.");
                 // Get Movie from Internet
                 FetchMovieTask fetchMoviesTask = new FetchMovieTask();
                 fetchMoviesTask.execute(sortOrder);
             } else {
-                //Log.w(LOG_TAG, "== No Internet Connection");
                 Toast.makeText(getActivity(), "No Internet Connection.", Toast.LENGTH_SHORT).show();
             }
         }
@@ -286,8 +272,6 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
                         .appendQueryParameter(PAGE, Integer.toString(page))
                         .build();
 
-                //Log.v(LOG_TAG, "URL:" + builtUri.toString());
-
                 URL url = new URL(builtUri.toString());
 
                 //Log.v(LOG_TAG, "Built URI " + builtUri.toString());
@@ -295,8 +279,6 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
                 urlConnection = (HttpURLConnection) url.openConnection();
                 urlConnection.setRequestMethod("GET");
                 urlConnection.connect();
-
-                //Log.v(LOG_TAG, "movies record count - urlConnection.connect: " + mdbMovies.size());
 
                 // Read the input stream into a String
                 InputStream inputStream = urlConnection.getInputStream();
@@ -316,11 +298,9 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
 
                 if (buffer.length() == 0) {
                     // Stream was empty.  No point in parsing.
-                    //Log.w(LOG_TAG, "Stream was empty!");
                     return null;
                 }
                 forecastJsonStr = buffer.toString();
-                //Log.v(LOG_TAG, "Response from MDB: " + forecastJsonStr);
 
             } catch (NullPointerException e) {
                 Log.e(LOG_TAG, "Error ", e);

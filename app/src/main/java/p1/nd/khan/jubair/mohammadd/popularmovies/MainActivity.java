@@ -31,7 +31,6 @@ public class MainActivity extends AppCompatActivity implements MainActivityFragm
     // The user selected the movie poster from the MainActivityFragment
     // Send movie details to MovieDetailActivityFragment for display.
     public void onMoviePosterSelected(MdbMovie mdbMovies) {
-        //Log.v(LOG_TAG, "===onMoviePosterSelected:" + mdbMovies.getTitle());
         Intent intent = new Intent(this, MovieDetailActivity.class);
         intent.putExtra(getString(R.string.MOVIE_PARCEL), mdbMovies);
         startActivity(intent);

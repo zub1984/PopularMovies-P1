@@ -42,7 +42,7 @@
     <string name="backdrop_image_description">Back drop image of movie.</string>
     <string name="image_poster_description">image poster</string>
     <string name="release_date">Release Date,</string>
-    <string name="rating_out_of_ten">x/10</string>
+    <string name="rating_out_of_ten">/10</string>
     <string name="rating_image">Rating Image</string>
 
 

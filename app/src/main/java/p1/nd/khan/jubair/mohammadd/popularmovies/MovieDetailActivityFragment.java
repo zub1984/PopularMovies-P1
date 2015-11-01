@@ -60,15 +60,12 @@ public class MovieDetailActivityFragment extends Fragment {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        //Log.v(LOG_TAG, "=== onCreate");
         super.onCreate(savedInstanceState);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-
-        //Log.v(LOG_TAG, "=== onCreateView");
         rootView = inflater.inflate(R.layout.fragment_movie_detail, container, false);
         Intent intent = getActivity().getIntent();
         if (intent != null) {
@@ -80,10 +77,7 @@ public class MovieDetailActivityFragment extends Fragment {
 
     //http://jakewharton.github.io/butterknife/
     public void DrawMovieDetailsFragment(MdbMovie movieDetails) {
-
-        //Log.v(LOG_TAG, "=== DrawMovieDetailsFragment:" + movieDetails.getTitle());
         ButterKnife.bind(this, rootView);
-        //final String tmdb_poster_url = "http://image.tmdb.org/t/p/w185";
         mBackdropPath.setScaleType(ImageView.ScaleType.FIT_XY);
         Picasso.with(getActivity())
                 .load(getString(R.string.BACK_DROP_IMAGE_URL) + movieDetails.getBackdropPath())
@@ -97,7 +91,7 @@ public class MovieDetailActivityFragment extends Fragment {
                 .load(R.drawable.ic_star_rate_black_18dp)
                 .into(mRatingStar);
 
-        final String ratingStr="/10";
+        final String ratingStr=getString(R.string.rating_out_of_ten);
 
         mTitle.setText(movieDetails.getTitle());
         mOverview.setText(movieDetails.getOverview());
