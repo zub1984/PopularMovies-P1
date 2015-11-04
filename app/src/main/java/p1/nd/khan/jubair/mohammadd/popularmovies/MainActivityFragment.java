@@ -136,11 +136,13 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
             case R.id.action_sort_by_popular:
                 item.setChecked(true);
                 mSortOrder = getString(R.string.SORT_ORDER_POPULARITY);
+                mRestoredState = false; //fix the issue of sorting on rotation
                 getMovieFromNet(mSortOrder);
                 break;
             case R.id.action_sort_by_rating:
                 item.setChecked(true);
                 mSortOrder = getString(R.string.SORT_ORDER_RATING);
+                mRestoredState = false; //fix the issue of sorting on rotation
                 getMovieFromNet(mSortOrder);
                 break;
         }
