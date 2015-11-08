@@ -30,6 +30,8 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import p1.nd.khan.jubair.mohammadd.popularmovies.listener.EndlessScrollListener;
+
 
 /**
  * A placeholder fragment containing a simple view.
@@ -50,19 +52,21 @@ import java.util.ArrayList;
 
 public class MainActivityFragment extends Fragment implements AbsListView.OnItemClickListener {
 
-
     private final String LOG_TAG = MainActivityFragment.class.getSimpleName();
     private ArrayList<String> mMovieUrls;
     private CustomImageAdapter mMovieAdapter;
     private String mSortOrder;
     private SharedPreferences mPrefs;
     private ArrayList<MdbMovie> mdbMovies = new ArrayList<>();
-    private boolean mRestoredState;
+    private int PAGE_NO;
+    private String optionSelected;
+
 
     OnMoviePosterSelectedListener mCallback;
 
     public MainActivityFragment() {
     }
+
 
     /* Container Activity must implement this interface
        http://developer.android.com/training/basics/fragments/communicating.html
@@ -95,14 +99,16 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
         super.onCreate(savedInstanceState);
         // Add this line in order for this fragment to handle menu events.
         setHasOptionsMenu(true);
-
-        if (savedInstanceState != null) {
-            mdbMovies = (ArrayList<MdbMovie>) savedInstanceState.get("movie_stored");
-            mRestoredState = true;
-        }
         mPrefs = getActivity().getPreferences(0);
         mSortOrder = mPrefs.getString(getString(R.string.pref_sort_order_key), getString(R.string.SORT_ORDER_POPULARITY));
-        getMovieFromNet(mSortOrder);
+
+        if (savedInstanceState != null) {
+            mdbMovies = savedInstanceState.getParcelableArrayList("movie_stored");
+            PAGE_NO = savedInstanceState.getInt("page_no");
+        } else {
+            PAGE_NO = 1;
+            getMovieFromNet(mSortOrder, PAGE_NO);
+        }
     }
 
     @Override
@@ -119,6 +125,7 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
         super.onSaveInstanceState(outState);
         // Save the movie's current state
         outState.putParcelableArrayList("movie_stored", mdbMovies);
+        outState.putInt("page_no", PAGE_NO);
     }
 
     @Override
@@ -135,18 +142,36 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
         switch (item.getItemId()) {
             case R.id.action_sort_by_popular:
                 item.setChecked(true);
-                mSortOrder = getString(R.string.SORT_ORDER_POPULARITY);
-                mRestoredState = false; //fix the issue of sorting on rotation
-                getMovieFromNet(mSortOrder);
+                optionSelected = getString(R.string.SORT_ORDER_POPULARITY);
                 break;
             case R.id.action_sort_by_rating:
                 item.setChecked(true);
-                mSortOrder = getString(R.string.SORT_ORDER_RATING);
-                mRestoredState = false; //fix the issue of sorting on rotation
-                getMovieFromNet(mSortOrder);
+                optionSelected = getString(R.string.SORT_ORDER_RATING);
                 break;
         }
+        // mRestoredState = false; //fix the issue of sorting on rotation
+        reloadMovie(optionSelected);
+        getMovieFromNet(optionSelected, PAGE_NO);
         return super.onOptionsItemSelected(item);
+    }
+
+    public void reloadMovie(String pOrder) {
+        if (optionSelected != null && !optionSelected.equals(mSortOrder)) {
+            PAGE_NO = 1;
+            mSortOrder = pOrder;
+            mdbMovies.clear();
+            mMovieUrls.clear();
+            mMovieAdapter.notifyDataSetChanged();
+        }
+    }
+
+    // Append more data into the adapter
+    public void customLoadMoreDataFromApi(int pOffset) {
+        // This method probably sends out a network request and appends new data items to your adapter.
+        // Use the offset value and add it as a parameter to your API request to retrieve paginated data.
+        // Deserialize API response and then construct new objects to append to the adapter
+        PAGE_NO = pOffset;
+        getMovieFromNet(mSortOrder, pOffset);
     }
 
     /**
@@ -154,16 +179,10 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
      *
      * @param sortOrder to fetch the movie details from MDB.
      */
-    private void getMovieFromNet(String sortOrder) {
-        // onSaveInstanceState: state is stored, URL call not required when mRestoredState=true.
-        if (!mRestoredState) {
-            if (Utility.isNetworkAvailable(getActivity())) {
-                // Get Movie from Internet
-                OkHttpClientRequestHandler(sortOrder, 1);
-            } else {
-                Toast.makeText(getActivity(), "No Internet Connection.", Toast.LENGTH_SHORT).show();
-            }
-        }
+    private void getMovieFromNet(String sortOrder, int pPageNo) {
+        if (Utility.isNetworkAvailable(getActivity()))
+            OkHttpClientRequestHandler(sortOrder, pPageNo);
+        else Toast.makeText(getActivity(), "No Internet Connection.", Toast.LENGTH_SHORT).show();
     }
 
     /**
@@ -199,6 +218,7 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
                                     public void run() {
                                         if (mdbMovies != null && mdbMovies.size() > 0) {
                                             mMovieUrls.clear();
+                                            mMovieAdapter.notifyDataSetChanged();
                                             for (MdbMovie aMovie : mdbMovies) {
                                                 // Store movie poster URL into Adapter
                                                 mMovieUrls.add(aMovie.getPosterUrl());
@@ -229,8 +249,7 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
         mMovieAdapter = new CustomImageAdapter(mMovieUrls);
 
         // if it is restored state load data from saved state (happens while switching from portrait mode to landscape mode)
-        // mRestoredState : changed to static to read/store data independent of instance.
-        if (mRestoredState) {
+        if (mdbMovies.size() > 0) {
             //load poster image name from MdbMovie object
             for (MdbMovie movie : mdbMovies) mMovieUrls.add(movie.getPosterUrl());
             mMovieAdapter.notifyDataSetChanged();
@@ -241,6 +260,18 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
         mGridView.setAdapter(mMovieAdapter);
         // Set OnItemClickListener so we can be notified on item clicks
         mGridView.setOnItemClickListener(this);
+
+        // Attach the listener to the AdapterView onCreate
+        mGridView.setOnScrollListener(new EndlessScrollListener() {
+            @Override
+            public boolean onLoadMore(int page, int totalItemsCount) {
+                // Triggered only when new data needs to be appended to the list
+                // Add whatever code is needed to append new items to your AdapterView
+                customLoadMoreDataFromApi(page);
+                // or customLoadMoreDataFromApi(totalItemsCount);
+                return true; // ONLY if more data is actually being loaded; false otherwise.
+            }
+        });
         return rootView;
     }
 
@@ -253,6 +284,7 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
+
             if (convertView == null) {
                 convertView = getActivity().getLayoutInflater()
                         .inflate(R.layout.list_item_movie_poster, parent, false);
@@ -298,15 +330,11 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
      */
     private ArrayList<MdbMovie> getMovieDataFromJson(String mdbJsonStr)
             throws JSONException {
-        // The name of the JSON objects that need to be extracted.
         JSONObject mdbMovieJson = new JSONObject(mdbJsonStr);
         JSONArray moviesArray = mdbMovieJson.getJSONArray(getString(R.string.MDB_REQ_RESULTS));
-        // Must clear the list before adding new
-        mdbMovies.clear();
         for (int i = 0; i < moviesArray.length(); i++) {
             // Get the JSON object representing the movie
             JSONObject movieAttributes = moviesArray.getJSONObject(i);
-            // Read movie attributes from JSONObject and add to Movie List.
             MdbMovie movieObj = new MdbMovie(movieAttributes.getString(getString(R.string.MDB_BACKDROP_PATH)),
                     movieAttributes.getString(getString(R.string.MDB_MOVIE_ID)),
                     movieAttributes.getString(getString(R.string.MDB_ORIGINAL_TITLE)),
