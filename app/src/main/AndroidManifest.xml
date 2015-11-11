@@ -29,6 +29,9 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="p1.nd.khan.jubair.mohammadd.popularmovies.MainActivity" />
         </activity>
+        <provider
+            android:authorities="p1.nd.khan.jubair.mohammadd.popularmovies.app"
+            android:name=".data.MovieProvider" />
     </application>
 
 </manifest>

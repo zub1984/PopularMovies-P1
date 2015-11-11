@@ -1,5 +1,6 @@
 package p1.nd.khan.jubair.mohammadd.popularmovies;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.Uri;
@@ -12,16 +13,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.GridView;
-import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.squareup.okhttp.Callback;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
-import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -29,8 +27,12 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
+import p1.nd.khan.jubair.mohammadd.popularmovies.adapter.MovieAdapter;
 import p1.nd.khan.jubair.mohammadd.popularmovies.listener.EndlessScrollListener;
+
+import static p1.nd.khan.jubair.mohammadd.popularmovies.data.MovieContract.MovieEntry;
 
 
 /**
@@ -50,17 +52,16 @@ import p1.nd.khan.jubair.mohammadd.popularmovies.listener.EndlessScrollListener;
         See the License for the specific language governing permissions and
         limitations under the License.*/
 
-public class MainActivityFragment extends Fragment implements AbsListView.OnItemClickListener {
+public class MainActivityFragment extends Fragment implements AbsListView.OnItemClickListener{
 
     private final String LOG_TAG = MainActivityFragment.class.getSimpleName();
     private ArrayList<String> mMovieUrls;
-    private CustomImageAdapter mMovieAdapter;
+    private MovieAdapter mMovieAdapter;
     private String mSortOrder;
     private SharedPreferences mPrefs;
     private ArrayList<MdbMovie> mdbMovies = new ArrayList<>();
     private int PAGE_NO;
     private String optionSelected;
-
 
     OnMoviePosterSelectedListener mCallback;
 
@@ -211,7 +212,8 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
                     try {
                         String jsonData = response.body().string();
                         if (response.isSuccessful()) {
-                            mdbMovies = getMovieDataFromJson(jsonData);
+                            // verify content provider
+                            mdbMovies = convertContentValuesToUXFormat(insertMovieContentValues(jsonData));
                             if (getActivity() != null) {
                                 getActivity().runOnUiThread(new Runnable() {
                                     @Override
@@ -246,7 +248,7 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
         final View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
         mMovieUrls = new ArrayList<>();
-        mMovieAdapter = new CustomImageAdapter(mMovieUrls);
+        mMovieAdapter = new MovieAdapter(getContext(),mMovieUrls);
 
         // if it is restored state load data from saved state (happens while switching from portrait mode to landscape mode)
         if (mdbMovies.size() > 0) {
@@ -275,37 +277,9 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
         return rootView;
     }
 
-    // https://www.bignerdranch.com/blog/solving-the-android-image-loading-problem-volley-vs-picasso/
-    private class CustomImageAdapter extends ArrayAdapter<String> {
-
-        public CustomImageAdapter(ArrayList<String> urls) {
-            super(getActivity(), 0, urls);
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-
-            if (convertView == null) {
-                convertView = getActivity().getLayoutInflater()
-                        .inflate(R.layout.list_item_movie_poster, parent, false);
-            }
-            ImageView imageView = (ImageView) convertView.findViewById(R.id.movie_poster_image);
-            imageView.setAdjustViewBounds(true); //Adjust its bound to max while Preserve the aspect ratio of Image
-
-            // Download Image from TMDB
-            Picasso.with(getActivity())
-                    .load(getString(R.string.POSTER_IMAGE_URL) + getItem(position))
-                    .into(imageView);
-
-            return convertView;
-        }
-    }
-
-    // Construct the URL for the Movies query
-    //http://api.themoviedb.org/3/discover/movie?sort_by=popularity.desc&api_key=PERSONAL_API_KEY&page=1
-
     /**
      * Format and prepare the required URL for MDB request
+     * Example : http://api.themoviedb.org/3/discover/movie?sort_by=popularity.desc&api_key=PERSONAL_API_KEY&page=1
      *
      * @param pSortOrder : user preferred order for movie display.
      * @param pPageNo    : page number to fetch the record.
@@ -323,26 +297,65 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
     }
 
     /**
-     * Take the String representing the complete response from MDB in JSON Format and
-     * pull out the data we need.
+     * Take the String representing the complete response from MDB in JSON format and
+     * pull out the data we need for content provider.
      *
      * @param mdbJsonStr : JSON string response
      */
-    private ArrayList<MdbMovie> getMovieDataFromJson(String mdbJsonStr)
+    private List<ContentValues> insertMovieContentValues(String mdbJsonStr)
             throws JSONException {
+        int result = 0;
+
         JSONObject mdbMovieJson = new JSONObject(mdbJsonStr);
         JSONArray moviesArray = mdbMovieJson.getJSONArray(getString(R.string.MDB_REQ_RESULTS));
+
+        List<ContentValues> moviesList = new ArrayList<>();
+
         for (int i = 0; i < moviesArray.length(); i++) {
             // Get the JSON object representing the movie
-            JSONObject movieAttributes = moviesArray.getJSONObject(i);
-            MdbMovie movieObj = new MdbMovie(movieAttributes.getString(getString(R.string.MDB_BACKDROP_PATH)),
-                    movieAttributes.getString(getString(R.string.MDB_MOVIE_ID)),
-                    movieAttributes.getString(getString(R.string.MDB_ORIGINAL_TITLE)),
-                    movieAttributes.getString(getString(R.string.MDB_OVERVIEW)),
-                    movieAttributes.getString(getString(R.string.MDB_POSTER_IMAGE)),
-                    movieAttributes.getString(getString(R.string.MDB_RELEASE_DATE)),
-                    movieAttributes.getString(getString(R.string.MDB_VOTE_AVERAGE)),
-                    movieAttributes.getString(getString(R.string.MDB_VOTE_COUNT)));
+            JSONObject mAttributes = moviesArray.getJSONObject(i);
+            ContentValues mValues = new ContentValues();
+
+            mValues.put(MovieEntry.C_MOVIE_ID, mAttributes.getString(getString(R.string.MDB_MOVIE_ID)));
+            mValues.put(MovieEntry.C_ORIGINAL_TITLE, mAttributes.getString(getString(R.string.MDB_ORIGINAL_TITLE)));
+            mValues.put(MovieEntry.C_OVERVIEW, mAttributes.getString(getString(R.string.MDB_OVERVIEW)));
+            mValues.put(MovieEntry.C_BACKDROP_PATH, mAttributes.getString(getString(R.string.MDB_BACKDROP_PATH)));
+            mValues.put(MovieEntry.C_POSTER_PATH, mAttributes.getString(getString(R.string.MDB_POSTER_IMAGE)));
+            mValues.put(MovieEntry.C_RELEASE_DATE, mAttributes.getString(getString(R.string.MDB_RELEASE_DATE)));
+            mValues.put(MovieEntry.C_VOTE_AVERAGE, mAttributes.getString(getString(R.string.MDB_VOTE_AVERAGE)));
+            mValues.put(MovieEntry.C_VOTE_COUNT, mAttributes.getString(getString(R.string.MDB_VOTE_COUNT)));
+            moviesList.add(mValues);
+        }
+        // Call bulkInsert to add the Movie Entries to the database from here
+        if (moviesList.size() > 0) {
+            result = getContext().getContentResolver().bulkInsert(
+                    MovieEntry.CONTENT_URI,
+                    moviesList.toArray(new ContentValues[moviesList.size()]));
+        }
+        Log.v(LOG_TAG, "===insertMovieContents: " + result);
+        return moviesList;
+    }
+
+    /*
+       This code will allow to continue to return the data that
+       the UX expects so that we can continue to test the application even once we begin using
+       the database.
+     */
+    private ArrayList<MdbMovie> convertContentValuesToUXFormat(List<ContentValues> cvv) {
+        // return strings to keep UI functional for now
+        for (int i = 0; i < cvv.size(); i++) {
+            ContentValues movieValues = cvv.get(i);
+            MdbMovie movieObj;
+            movieObj = new MdbMovie(
+                    movieValues.getAsString(MovieEntry.C_BACKDROP_PATH),
+                    movieValues.getAsString(MovieEntry.C_MOVIE_ID),
+                    movieValues.getAsString(MovieEntry.C_ORIGINAL_TITLE),
+                    movieValues.getAsString(MovieEntry.C_OVERVIEW),
+                    movieValues.getAsString(MovieEntry.C_POSTER_PATH),
+                    movieValues.getAsString(MovieEntry.C_RELEASE_DATE),
+                    movieValues.getAsString(MovieEntry.C_VOTE_AVERAGE),
+                    movieValues.getAsString(MovieEntry.C_VOTE_COUNT)
+            );
             mdbMovies.add(movieObj);
         }
         return mdbMovies;
