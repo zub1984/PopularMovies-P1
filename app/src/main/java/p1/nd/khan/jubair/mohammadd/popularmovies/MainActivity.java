@@ -6,14 +6,28 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import p1.nd.khan.jubair.mohammadd.popularmovies.sync.MovieSyncAdapter;
+
 public class MainActivity extends AppCompatActivity implements MainActivityFragment.OnMoviePosterSelectedListener {
 
     //public final String LOG_TAG = MainActivity.class.getSimpleName();
+    private boolean mTwoPane;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        MainActivityFragment mainActivityFragment =  (MainActivityFragment)getSupportFragmentManager()
+                .findFragmentById(R.id.fragment_main);
+
+
+        if (findViewById(R.id.fragment_movie_detail) != null) {
+            mTwoPane = true;
+            mainActivityFragment.setActivateOnItemClick(true);
+        }
+
+        MovieSyncAdapter.initializeSyncAdapter(this);
     }
 
     @Override
@@ -31,8 +45,19 @@ public class MainActivity extends AppCompatActivity implements MainActivityFragm
     // The user selected the movie poster from the MainActivityFragment
     // Send movie details to MovieDetailActivityFragment for display.
     public void onMoviePosterSelected(int movieId) {
-        Intent intent = new Intent(this, MovieDetailActivity.class);
-        intent.putExtra(getString(R.string.MOVIE_PARCEL), movieId);
-        startActivity(intent);
+        if (mTwoPane) {
+            Bundle arguments = new Bundle();
+            arguments.putInt(getString(R.string.MOVIE_PARCEL), movieId);
+            MovieDetailActivityFragment fragment = new MovieDetailActivityFragment();
+            fragment.setArguments(arguments);
+            getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.fragment_movie_detail, new MovieDetailActivityFragment(), "MDA_FRAGMENT")
+                    .commit();
+        }else{
+            Intent detailIntent = new Intent(this, MovieDetailActivity.class);
+            detailIntent.putExtra(getString(R.string.MOVIE_PARCEL), movieId);
+            startActivity(detailIntent);
+        }
+
     }
 }

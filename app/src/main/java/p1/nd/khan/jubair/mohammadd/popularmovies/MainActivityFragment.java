@@ -117,7 +117,7 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
         super.onSaveInstanceState(outState);
         outState.putInt("page_no", PAGE_NO);
 
-        if (mPosition != ListView.INVALID_POSITION) {
+        if (mPosition != GridView.INVALID_POSITION) {
             outState.putInt(SELECTED_KEY, mPosition);
         }
     }
@@ -214,6 +214,10 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
         return rootView;
     }
 
+    public void setActivateOnItemClick(boolean activateOnItemClick) {
+        mGridView.setChoiceMode(activateOnItemClick ? ListView.CHOICE_MODE_SINGLE : ListView.CHOICE_MODE_NONE);
+    }
+
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         Bundle bundle = new Bundle();
@@ -228,7 +232,6 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
             getMovieFromNet(mSortOrder, PAGE_NO);
         }
         getLoaderManager().initLoader(CURSOR_LOADER_ID, bundle, this);
-        if (!cur.isClosed()) cur.close();
 
         super.onActivityCreated(savedInstanceState);
     }
@@ -249,7 +252,7 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
     @Override
     public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
         mMovieAdapter.swapCursor(cursor);
-        if (mPosition != ListView.INVALID_POSITION) {
+        if (mPosition != GridView.INVALID_POSITION) {
             Log.v(LOG_TAG, "===onLoadFinished ,mPosition:"+mPosition);
             mGridView.smoothScrollToPosition(mPosition);
         }
