@@ -41,8 +41,10 @@ public class MovieAdapter extends CursorAdapter {
 
     @Override
     public View newView(Context context, Cursor cursor, ViewGroup parent) {
+
+        //int viewType = getItemViewType(cursor.getPosition());
         int layoutId = R.layout.list_item_movie_poster;
-        //Log.d(LOG_TAG, "In new View");
+
         View view = LayoutInflater.from(context).inflate(layoutId, parent, false);
         ViewHolder viewHolder = new ViewHolder(view);
         view.setTag(viewHolder);
@@ -52,8 +54,6 @@ public class MovieAdapter extends CursorAdapter {
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
         ViewHolder viewHolder = (ViewHolder) view.getTag();
-        //Log.d(LOG_TAG, "In bind View");
-        //int imageIndex = cursor.getColumnIndex(MovieContract.MovieEntry.C_POSTER_PATH);
         String posterPath = cursor.getString(MainActivityFragment.C_POSTER_PATH);
         //Log.i(LOG_TAG, "Image reference extracted: " + posterPath);
         if (posterPath != null) {

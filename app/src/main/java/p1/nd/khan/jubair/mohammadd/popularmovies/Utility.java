@@ -6,6 +6,7 @@ package p1.nd.khan.jubair.mohammadd.popularmovies;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 
@@ -49,6 +50,12 @@ public class Utility {
 
     public static String getPreferredSorting(Activity activity) {
         return activity.getPreferences(0).getString(activity.getString(R.string.pref_sort_order_key), activity.getString(R.string.SORT_ORDER_POPULARITY));
+    }
+
+    public static void updatePreferredSorting(Activity activity, String sortOrder) {
+        SharedPreferences.Editor editor = activity.getPreferences(0).edit();
+        editor.putString(activity.getString(R.string.pref_sort_order_key), sortOrder);
+        editor.apply();
     }
 
 }

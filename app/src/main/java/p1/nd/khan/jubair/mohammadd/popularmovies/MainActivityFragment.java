@@ -2,7 +2,6 @@ package p1.nd.khan.jubair.mohammadd.popularmovies;
 
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -64,12 +63,11 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
     OnMoviePosterSelectedListener mCallback;
     private MovieAdapter mMovieAdapter;
     private String mSortOrder;
-    private SharedPreferences mPrefs;
     private int PAGE_NO;
     private String optionSelected;
 
     public static final String SORT_ORDER_POPULARITY = MovieEntry.C_VOTE_COUNT + " DESC," + MovieContract.MovieEntry._ID + " ASC";
-    //public static final String SORT_ORDER_RATING = MovieContract.MovieEntry.C_VOTE_AVERAGE + " DESC," + MovieContract.MovieEntry._ID + " ASC";
+    public static final String SORT_ORDER_RATING = MovieContract.MovieEntry.C_VOTE_AVERAGE + " DESC," + MovieContract.MovieEntry._ID + " ASC";
 
     private static final String[] MOVIE_LIST_COLUMNS = {
             MovieContract.MovieEntry._ID,
@@ -106,30 +104,25 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
         super.onCreate(savedInstanceState);
         // Add this line in order for this fragment to handle menu events.
         setHasOptionsMenu(true);
-        mPrefs = getActivity().getPreferences(0);
-        mSortOrder = mPrefs.getString(getString(R.string.pref_sort_order_key), getString(R.string.SORT_ORDER_POPULARITY));
+        mSortOrder = Utility.getPreferredSorting(getActivity());
 
         if (savedInstanceState != null) {
             PAGE_NO = savedInstanceState.getInt("page_no");
         } else {
             PAGE_NO = 1;
-            //getMovieFromNet(mSortOrder, PAGE_NO);
         }
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        SharedPreferences.Editor editor = mPrefs.edit();
-        editor.putString(getString(R.string.pref_sort_order_key), mSortOrder);
-        editor.apply();
+        Utility.updatePreferredSorting(getActivity(), mSortOrder);
     }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
         // Always call the superclass so it can save the view hierarchy state
         super.onSaveInstanceState(outState);
-        // Save the movie's current state
         outState.putInt("page_no", PAGE_NO);
     }
 
@@ -153,29 +146,31 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_sort_by_popular:
-                item.setChecked(true);
                 optionSelected = getString(R.string.SORT_ORDER_POPULARITY);
                 break;
             case R.id.action_sort_by_rating:
-                item.setChecked(true);
                 optionSelected = getString(R.string.SORT_ORDER_RATING);
                 break;
         }
-        reloadMovie(optionSelected);
-        getMovieFromNet(optionSelected, PAGE_NO);
+        item.setChecked(true);
+        onSortingOptionChanged();
         return super.onOptionsItemSelected(item);
     }
 
-    public void reloadMovie(String pOrder) {
+    // since we read the location when we create the loader, all we need to do is restart things
+    private void onSortingOptionChanged() {
         if (optionSelected != null && !optionSelected.equals(mSortOrder)) {
+            Log.v(LOG_TAG, "==onSortingOptionChanged,optionSelected:"+optionSelected+",mSortOrder:"+mSortOrder);
+
             PAGE_NO = 1;
-            mSortOrder = pOrder;
-            //mMovieAdapter.notifyDataSetChanged();
+            mSortOrder = optionSelected;
+            getMovieFromNet(optionSelected, PAGE_NO);
+            getLoaderManager().restartLoader(CURSOR_LOADER_ID, null, this);
         }
     }
 
     // Append more data into the adapter
-    public void customLoadMoreDataFromApi(int pOffset) {
+    private void customLoadMoreDataFromApi(int pOffset) {
         // This method probably sends out a network request and appends new data items to your adapter.
         // Use the offset value and add it as a parameter to your API request to retrieve paginated data.
         // Deserialize API response and then construct new objects to append to the adapter
@@ -190,7 +185,6 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
      */
     private void getMovieFromNet(String sortOrder, int pPageNo) {
         if (Utility.isNetworkAvailable(getActivity()))
-            //return;
             OkHttpClientRequestHandler(sortOrder, pPageNo);
         else Toast.makeText(getActivity(), "No Internet Connection.", Toast.LENGTH_SHORT).show();
     }
@@ -264,11 +258,13 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
 
         Uri movieUri = MovieContract.MovieEntry.buildMovieUri(PAGE_NO);
         Cursor cur = getActivity().getContentResolver().query(movieUri, MOVIE_LIST_COLUMNS, null, null, SORT_ORDER_POPULARITY);
-        if (0==cur.getCount()){
-            Log.d(LOG_TAG, "no data in cursor!");
+        if (null!=cur && 0==cur.getCount()){
+            //Log.d(LOG_TAG, "no data in cursor!");
             getMovieFromNet(mSortOrder, PAGE_NO);
         }
         getLoaderManager().initLoader(CURSOR_LOADER_ID, bundle, this);
+        if (!cur.isClosed()) cur.close();
+
         super.onActivityCreated(savedInstanceState);
     }
 
