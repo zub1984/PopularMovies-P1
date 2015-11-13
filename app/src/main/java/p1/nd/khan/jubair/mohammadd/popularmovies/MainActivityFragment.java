@@ -3,9 +3,13 @@ package p1.nd.khan.jubair.mohammadd.popularmovies;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -30,6 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import p1.nd.khan.jubair.mohammadd.popularmovies.adapter.MovieAdapter;
+import p1.nd.khan.jubair.mohammadd.popularmovies.data.MovieContract;
 import p1.nd.khan.jubair.mohammadd.popularmovies.listener.EndlessScrollListener;
 
 import static p1.nd.khan.jubair.mohammadd.popularmovies.data.MovieContract.MovieEntry;
@@ -52,28 +57,30 @@ import static p1.nd.khan.jubair.mohammadd.popularmovies.data.MovieContract.Movie
         See the License for the specific language governing permissions and
         limitations under the License.*/
 
-public class MainActivityFragment extends Fragment implements AbsListView.OnItemClickListener{
+public class MainActivityFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>,AbsListView.OnItemClickListener{
 
+    private static final int CURSOR_LOADER_ID = 0;
     private final String LOG_TAG = MainActivityFragment.class.getSimpleName();
-    private ArrayList<String> mMovieUrls;
+    OnMoviePosterSelectedListener mCallback;
     private MovieAdapter mMovieAdapter;
     private String mSortOrder;
     private SharedPreferences mPrefs;
-    private ArrayList<MdbMovie> mdbMovies = new ArrayList<>();
     private int PAGE_NO;
     private String optionSelected;
 
-    OnMoviePosterSelectedListener mCallback;
+    public static final String SORT_ORDER_POPULARITY = MovieEntry.C_VOTE_COUNT + " DESC," + MovieContract.MovieEntry._ID + " ASC";
+    //public static final String SORT_ORDER_RATING = MovieContract.MovieEntry.C_VOTE_AVERAGE + " DESC," + MovieContract.MovieEntry._ID + " ASC";
+
+    private static final String[] MOVIE_LIST_COLUMNS = {
+            MovieContract.MovieEntry._ID,
+            MovieEntry.C_MOVIE_ID,
+            MovieEntry.C_POSTER_PATH
+    };
+    public static final int C_ID = 0;
+    public static final int C_MOVIE_ID = 1;
+    public static final int C_POSTER_PATH = 2;
 
     public MainActivityFragment() {
-    }
-
-
-    /* Container Activity must implement this interface
-       http://developer.android.com/training/basics/fragments/communicating.html
-       Communicating with Other Fragments*/
-    public interface OnMoviePosterSelectedListener {
-        void onMoviePosterSelected(MdbMovie mdbMovies);
     }
 
     @Override
@@ -94,7 +101,6 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
         mCallback = null;
     }
 
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -104,11 +110,10 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
         mSortOrder = mPrefs.getString(getString(R.string.pref_sort_order_key), getString(R.string.SORT_ORDER_POPULARITY));
 
         if (savedInstanceState != null) {
-            mdbMovies = savedInstanceState.getParcelableArrayList("movie_stored");
             PAGE_NO = savedInstanceState.getInt("page_no");
         } else {
             PAGE_NO = 1;
-            getMovieFromNet(mSortOrder, PAGE_NO);
+            //getMovieFromNet(mSortOrder, PAGE_NO);
         }
     }
 
@@ -116,7 +121,7 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
     public void onPause() {
         super.onPause();
         SharedPreferences.Editor editor = mPrefs.edit();
-        editor.putString("sort_mode", mSortOrder);
+        editor.putString(getString(R.string.pref_sort_order_key), mSortOrder);
         editor.apply();
     }
 
@@ -125,16 +130,22 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
         // Always call the superclass so it can save the view hierarchy state
         super.onSaveInstanceState(outState);
         // Save the movie's current state
-        outState.putParcelableArrayList("movie_stored", mdbMovies);
         outState.putInt("page_no", PAGE_NO);
     }
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         if (null != mCallback) {
-            // Notify the active callbacks interface (the activity, if the
-            // fragment is attached to one) that an item has been selected.
-            mCallback.onMoviePosterSelected(mdbMovies.get(position));
+            // increment the position to match Database Ids indexed starting at 1
+            //int uriId = position + 1;
+            //Log.v(LOG_TAG, "==onItemClick,uriId:" + uriId);
+
+            // CursorAdapter returns a cursor at the correct position for getItem(), or null
+            // if it cannot seek to that position.
+            Cursor cursor = (Cursor) parent.getItemAtPosition(position);
+            if (cursor != null) {
+                mCallback.onMoviePosterSelected(cursor.getInt(MainActivityFragment.C_MOVIE_ID));
+            }
         }
     }
 
@@ -150,7 +161,6 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
                 optionSelected = getString(R.string.SORT_ORDER_RATING);
                 break;
         }
-        // mRestoredState = false; //fix the issue of sorting on rotation
         reloadMovie(optionSelected);
         getMovieFromNet(optionSelected, PAGE_NO);
         return super.onOptionsItemSelected(item);
@@ -160,9 +170,7 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
         if (optionSelected != null && !optionSelected.equals(mSortOrder)) {
             PAGE_NO = 1;
             mSortOrder = pOrder;
-            mdbMovies.clear();
-            mMovieUrls.clear();
-            mMovieAdapter.notifyDataSetChanged();
+            //mMovieAdapter.notifyDataSetChanged();
         }
     }
 
@@ -182,6 +190,7 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
      */
     private void getMovieFromNet(String sortOrder, int pPageNo) {
         if (Utility.isNetworkAvailable(getActivity()))
+            //return;
             OkHttpClientRequestHandler(sortOrder, pPageNo);
         else Toast.makeText(getActivity(), "No Internet Connection.", Toast.LENGTH_SHORT).show();
     }
@@ -212,26 +221,7 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
                     try {
                         String jsonData = response.body().string();
                         if (response.isSuccessful()) {
-                            // verify content provider
-                            mdbMovies = convertContentValuesToUXFormat(insertMovieContentValues(jsonData));
-                            if (getActivity() != null) {
-                                getActivity().runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        if (mdbMovies != null && mdbMovies.size() > 0) {
-                                            mMovieUrls.clear();
-                                            mMovieAdapter.notifyDataSetChanged();
-                                            for (MdbMovie aMovie : mdbMovies) {
-                                                // Store movie poster URL into Adapter
-                                                mMovieUrls.add(aMovie.getPosterUrl());
-                                            }
-                                            mMovieAdapter.notifyDataSetChanged();
-                                        } else {
-                                            Toast.makeText(getActivity(), "Failed to load poster image in list.", Toast.LENGTH_SHORT).show();
-                                        }
-                                    }
-                                });
-                            }
+                            insertMovieContentValues(jsonData);
                         }
                     } catch (IOException | JSONException e) {
                         Log.e(LOG_TAG, "IOException | JSONException: Exception caught: ", e);
@@ -246,21 +236,10 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
                              Bundle savedInstanceState) {
 
         final View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-
-        mMovieUrls = new ArrayList<>();
-        mMovieAdapter = new MovieAdapter(getContext(),mMovieUrls);
-
-        // if it is restored state load data from saved state (happens while switching from portrait mode to landscape mode)
-        if (mdbMovies.size() > 0) {
-            //load poster image name from MdbMovie object
-            for (MdbMovie movie : mdbMovies) mMovieUrls.add(movie.getPosterUrl());
-            mMovieAdapter.notifyDataSetChanged();
-        }
-
+        mMovieAdapter = new MovieAdapter(getActivity(), null, 0, CURSOR_LOADER_ID);
         // Get a reference to the ListView, and attach this adapter to it.
         GridView mGridView = (GridView) rootView.findViewById(R.id.movie_list_gridview);
         mGridView.setAdapter(mMovieAdapter);
-        // Set OnItemClickListener so we can be notified on item clicks
         mGridView.setOnItemClickListener(this);
 
         // Attach the listener to the AdapterView onCreate
@@ -270,11 +249,50 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
                 // Triggered only when new data needs to be appended to the list
                 // Add whatever code is needed to append new items to your AdapterView
                 customLoadMoreDataFromApi(page);
-                // or customLoadMoreDataFromApi(totalItemsCount);
                 return true; // ONLY if more data is actually being loaded; false otherwise.
             }
         });
         return rootView;
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        Bundle bundle = new Bundle();
+        if (mSortOrder != null) {
+            bundle.putString(getString(R.string.pref_sort_order_key), mSortOrder);
+        }
+
+        Uri movieUri = MovieContract.MovieEntry.buildMovieUri(PAGE_NO);
+        Cursor cur = getActivity().getContentResolver().query(movieUri, MOVIE_LIST_COLUMNS, null, null, SORT_ORDER_POPULARITY);
+        if (0==cur.getCount()){
+            Log.d(LOG_TAG, "no data in cursor!");
+            getMovieFromNet(mSortOrder, PAGE_NO);
+        }
+        getLoaderManager().initLoader(CURSOR_LOADER_ID, bundle, this);
+        super.onActivityCreated(savedInstanceState);
+    }
+
+    // Attach loader to our flavors database query
+    // run when loader is initialized
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args){
+        Uri movieUri = MovieContract.MovieEntry.buildMovieUri(PAGE_NO);
+        return new CursorLoader(getActivity(),
+                movieUri,
+                MOVIE_LIST_COLUMNS,
+                null,
+                null,
+                SORT_ORDER_POPULARITY);
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
+        mMovieAdapter.swapCursor(cursor);
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> cursorLoader) {
+        mMovieAdapter.swapCursor(null);
     }
 
     /**
@@ -336,28 +354,10 @@ public class MainActivityFragment extends Fragment implements AbsListView.OnItem
         return moviesList;
     }
 
-    /*
-       This code will allow to continue to return the data that
-       the UX expects so that we can continue to test the application even once we begin using
-       the database.
-     */
-    private ArrayList<MdbMovie> convertContentValuesToUXFormat(List<ContentValues> cvv) {
-        // return strings to keep UI functional for now
-        for (int i = 0; i < cvv.size(); i++) {
-            ContentValues movieValues = cvv.get(i);
-            MdbMovie movieObj;
-            movieObj = new MdbMovie(
-                    movieValues.getAsString(MovieEntry.C_BACKDROP_PATH),
-                    movieValues.getAsString(MovieEntry.C_MOVIE_ID),
-                    movieValues.getAsString(MovieEntry.C_ORIGINAL_TITLE),
-                    movieValues.getAsString(MovieEntry.C_OVERVIEW),
-                    movieValues.getAsString(MovieEntry.C_POSTER_PATH),
-                    movieValues.getAsString(MovieEntry.C_RELEASE_DATE),
-                    movieValues.getAsString(MovieEntry.C_VOTE_AVERAGE),
-                    movieValues.getAsString(MovieEntry.C_VOTE_COUNT)
-            );
-            mdbMovies.add(movieObj);
-        }
-        return mdbMovies;
+    /* Container Activity must implement this interface
+       http://developer.android.com/training/basics/fragments/communicating.html
+       Communicating with Other Fragments*/
+    public interface OnMoviePosterSelectedListener {
+        void onMoviePosterSelected(int movieId);
     }
 }

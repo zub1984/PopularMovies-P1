@@ -47,5 +47,9 @@ public class Utility {
         return result;
     }
 
+    public static String getPreferredSorting(Activity activity) {
+        return activity.getPreferences(0).getString(activity.getString(R.string.pref_sort_order_key), activity.getString(R.string.SORT_ORDER_POPULARITY));
+    }
+
 }
 
