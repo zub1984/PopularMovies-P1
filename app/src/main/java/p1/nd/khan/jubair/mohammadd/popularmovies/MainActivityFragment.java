@@ -1,6 +1,5 @@
 package p1.nd.khan.jubair.mohammadd.popularmovies;
 
-import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
@@ -17,24 +16,13 @@ import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.GridView;
+import android.widget.ListView;
 import android.widget.Toast;
-
-import com.squareup.okhttp.Callback;
-import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.Response;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 import p1.nd.khan.jubair.mohammadd.popularmovies.adapter.MovieAdapter;
 import p1.nd.khan.jubair.mohammadd.popularmovies.data.MovieContract;
 import p1.nd.khan.jubair.mohammadd.popularmovies.listener.EndlessScrollListener;
+import p1.nd.khan.jubair.mohammadd.popularmovies.sync.MovieSyncAdapter;
 
 import static p1.nd.khan.jubair.mohammadd.popularmovies.data.MovieContract.MovieEntry;
 
@@ -78,6 +66,10 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
     public static final int C_MOVIE_ID = 1;
     public static final int C_POSTER_PATH = 2;
 
+    private int mPosition = GridView.INVALID_POSITION;
+    private static final String SELECTED_KEY = "selected_position";
+    GridView mGridView;
+
     public MainActivityFragment() {
     }
 
@@ -104,7 +96,7 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
         super.onCreate(savedInstanceState);
         // Add this line in order for this fragment to handle menu events.
         setHasOptionsMenu(true);
-        mSortOrder = Utility.getPreferredSorting(getActivity());
+        mSortOrder = Utility.getPreferredSorting(getContext());
 
         if (savedInstanceState != null) {
             PAGE_NO = savedInstanceState.getInt("page_no");
@@ -124,6 +116,10 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
         // Always call the superclass so it can save the view hierarchy state
         super.onSaveInstanceState(outState);
         outState.putInt("page_no", PAGE_NO);
+
+        if (mPosition != ListView.INVALID_POSITION) {
+            outState.putInt(SELECTED_KEY, mPosition);
+        }
     }
 
     @Override
@@ -132,13 +128,13 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
             // increment the position to match Database Ids indexed starting at 1
             //int uriId = position + 1;
             //Log.v(LOG_TAG, "==onItemClick,uriId:" + uriId);
-
             // CursorAdapter returns a cursor at the correct position for getItem(), or null
             // if it cannot seek to that position.
             Cursor cursor = (Cursor) parent.getItemAtPosition(position);
             if (cursor != null) {
                 mCallback.onMoviePosterSelected(cursor.getInt(MainActivityFragment.C_MOVIE_ID));
             }
+            mPosition =position;
         }
     }
 
@@ -161,7 +157,6 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
     private void onSortingOptionChanged() {
         if (optionSelected != null && !optionSelected.equals(mSortOrder)) {
             Log.v(LOG_TAG, "==onSortingOptionChanged,optionSelected:"+optionSelected+",mSortOrder:"+mSortOrder);
-
             PAGE_NO = 1;
             mSortOrder = optionSelected;
             getMovieFromNet(optionSelected, PAGE_NO);
@@ -184,45 +179,10 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
      * @param sortOrder to fetch the movie details from MDB.
      */
     private void getMovieFromNet(String sortOrder, int pPageNo) {
-        if (Utility.isNetworkAvailable(getActivity()))
-            OkHttpClientRequestHandler(sortOrder, pPageNo);
-        else Toast.makeText(getActivity(), "No Internet Connection.", Toast.LENGTH_SHORT).show();
-    }
-
-    /**
-     * OkHttpClientRequestHandler, to make ok http request to //http://api.themoviedb.org/3/discover/movie
-     * http://square.github.io/okhttp/
-     * http://stackoverflow.com/questions/16902716/comparison-of-android-networking-libraries-okhttp-retrofit-volley
-     * Note :Planned to implement retrofit for stage:2
-     *
-     * @param pSortOrder : user preferred order for movie display.
-     * @param pPageNo    : page number to fetch the record.
-     */
-    private void OkHttpClientRequestHandler(String pSortOrder, int pPageNo) {
-        {
-            OkHttpClient client = new OkHttpClient();
-            Request request = new Request.Builder()
-                    .url(UrlFormatter(pSortOrder, pPageNo))
-                    .build();
-            client.newCall(request).enqueue(new Callback() {
-                @Override
-                public void onFailure(Request request, IOException e) {
-                    Log.e(LOG_TAG, "==onFailure:", e);
-                }
-
-                @Override
-                public void onResponse(Response response) throws IOException {
-                    try {
-                        String jsonData = response.body().string();
-                        if (response.isSuccessful()) {
-                            insertMovieContentValues(jsonData);
-                        }
-                    } catch (IOException | JSONException e) {
-                        Log.e(LOG_TAG, "IOException | JSONException: Exception caught: ", e);
-                    }
-                }
-            });
+        if (Utility.isNetworkAvailable(getActivity())){
+            MovieSyncAdapter.syncImmediately(getActivity());
         }
+        else Toast.makeText(getActivity(), "No Internet Connection.", Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -232,7 +192,7 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
         final View rootView = inflater.inflate(R.layout.fragment_main, container, false);
         mMovieAdapter = new MovieAdapter(getActivity(), null, 0, CURSOR_LOADER_ID);
         // Get a reference to the ListView, and attach this adapter to it.
-        GridView mGridView = (GridView) rootView.findViewById(R.id.movie_list_gridview);
+        mGridView = (GridView) rootView.findViewById(R.id.movie_list_gridview);
         mGridView.setAdapter(mMovieAdapter);
         mGridView.setOnItemClickListener(this);
 
@@ -246,6 +206,11 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
                 return true; // ONLY if more data is actually being loaded; false otherwise.
             }
         });
+
+        if (savedInstanceState != null && savedInstanceState.containsKey(SELECTED_KEY)) {
+            mPosition = savedInstanceState.getInt(SELECTED_KEY);
+        }
+
         return rootView;
     }
 
@@ -284,70 +249,15 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
     @Override
     public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
         mMovieAdapter.swapCursor(cursor);
+        if (mPosition != ListView.INVALID_POSITION) {
+            Log.v(LOG_TAG, "===onLoadFinished ,mPosition:"+mPosition);
+            mGridView.smoothScrollToPosition(mPosition);
+        }
     }
 
     @Override
     public void onLoaderReset(Loader<Cursor> cursorLoader) {
         mMovieAdapter.swapCursor(null);
-    }
-
-    /**
-     * Format and prepare the required URL for MDB request
-     * Example : http://api.themoviedb.org/3/discover/movie?sort_by=popularity.desc&api_key=PERSONAL_API_KEY&page=1
-     *
-     * @param pSortOrder : user preferred order for movie display.
-     * @param pPageNo    : page number to fetch the record.
-     */
-    private String UrlFormatter(String pSortOrder, int pPageNo) {
-        final String SORT_BY = "sort_by";
-        final String API_KEY = "api_key";
-        final String PAGE = "page";
-        Uri builtUri = Uri.parse(getString(R.string.MDB_POPULAR_MOVIE_URL)).buildUpon()
-                .appendQueryParameter(SORT_BY, pSortOrder)
-                .appendQueryParameter(API_KEY, getString(R.string.PERSONAL_API_KEY))
-                .appendQueryParameter(PAGE, Integer.toString(pPageNo))
-                .build();
-        return builtUri.toString();
-    }
-
-    /**
-     * Take the String representing the complete response from MDB in JSON format and
-     * pull out the data we need for content provider.
-     *
-     * @param mdbJsonStr : JSON string response
-     */
-    private List<ContentValues> insertMovieContentValues(String mdbJsonStr)
-            throws JSONException {
-        int result = 0;
-
-        JSONObject mdbMovieJson = new JSONObject(mdbJsonStr);
-        JSONArray moviesArray = mdbMovieJson.getJSONArray(getString(R.string.MDB_REQ_RESULTS));
-
-        List<ContentValues> moviesList = new ArrayList<>();
-
-        for (int i = 0; i < moviesArray.length(); i++) {
-            // Get the JSON object representing the movie
-            JSONObject mAttributes = moviesArray.getJSONObject(i);
-            ContentValues mValues = new ContentValues();
-
-            mValues.put(MovieEntry.C_MOVIE_ID, mAttributes.getString(getString(R.string.MDB_MOVIE_ID)));
-            mValues.put(MovieEntry.C_ORIGINAL_TITLE, mAttributes.getString(getString(R.string.MDB_ORIGINAL_TITLE)));
-            mValues.put(MovieEntry.C_OVERVIEW, mAttributes.getString(getString(R.string.MDB_OVERVIEW)));
-            mValues.put(MovieEntry.C_BACKDROP_PATH, mAttributes.getString(getString(R.string.MDB_BACKDROP_PATH)));
-            mValues.put(MovieEntry.C_POSTER_PATH, mAttributes.getString(getString(R.string.MDB_POSTER_IMAGE)));
-            mValues.put(MovieEntry.C_RELEASE_DATE, mAttributes.getString(getString(R.string.MDB_RELEASE_DATE)));
-            mValues.put(MovieEntry.C_VOTE_AVERAGE, mAttributes.getString(getString(R.string.MDB_VOTE_AVERAGE)));
-            mValues.put(MovieEntry.C_VOTE_COUNT, mAttributes.getString(getString(R.string.MDB_VOTE_COUNT)));
-            moviesList.add(mValues);
-        }
-        // Call bulkInsert to add the Movie Entries to the database from here
-        if (moviesList.size() > 0) {
-            result = getContext().getContentResolver().bulkInsert(
-                    MovieEntry.CONTENT_URI,
-                    moviesList.toArray(new ContentValues[moviesList.size()]));
-        }
-        Log.v(LOG_TAG, "===insertMovieContents: " + result);
-        return moviesList;
     }
 
     /* Container Activity must implement this interface

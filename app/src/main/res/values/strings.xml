@@ -46,4 +46,8 @@
     <string name="rating_image">Rating Image</string>
 
 
+    <!-- SyncAdapter related -->
+    <string name="sync_account_type">md.jubair.khan.nd.com</string>
+    <string name="content_authority">p1.nd.khan.jubair.mohammadd.popularmovies.ap</string>
+
 </resources>

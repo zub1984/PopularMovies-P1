@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.preference.PreferenceManager;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -48,8 +49,10 @@ public class Utility {
         return result;
     }
 
-    public static String getPreferredSorting(Activity activity) {
-        return activity.getPreferences(0).getString(activity.getString(R.string.pref_sort_order_key), activity.getString(R.string.SORT_ORDER_POPULARITY));
+    public static String getPreferredSorting(Context context) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        return prefs.getString(context.getString(R.string.pref_sort_order_key),
+                context.getString(R.string.SORT_ORDER_POPULARITY));
     }
 
     public static void updatePreferredSorting(Activity activity, String sortOrder) {
