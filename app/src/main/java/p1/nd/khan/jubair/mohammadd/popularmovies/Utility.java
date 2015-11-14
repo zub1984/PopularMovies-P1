@@ -9,7 +9,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.preference.PreferenceManager;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -18,11 +17,12 @@ public class Utility {
 
     private static final SimpleDateFormat DATE_FORMAT_MDB = new SimpleDateFormat("yyyy-MM-dd");
     private static final SimpleDateFormat DATE_FORMAT_MONTH_YEAR = new SimpleDateFormat("MMMM yyyy");
+    private static final String PREFS_NAME = "moviePref";
 
     //http://stackoverflow.com/questions/4238921/detect-whether-there-is-an-internet-connection-available-on-android
-    public static boolean isNetworkAvailable(Activity activity) {
+    public static boolean isNetworkAvailable(Context context) {
         ConnectivityManager connectivityManager
-                = (ConnectivityManager) activity.getSystemService(Context.CONNECTIVITY_SERVICE);
+                = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
@@ -40,7 +40,6 @@ public class Utility {
             try {
                 result = DATE_FORMAT_MONTH_YEAR.format(DATE_FORMAT_MDB.parse(releaseDate));
             } catch (ParseException e) {
-
                 result = "unknown_release_date";
             }
         } else {
@@ -50,15 +49,13 @@ public class Utility {
     }
 
     public static String getPreferredSorting(Context context) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        return prefs.getString(context.getString(R.string.pref_sort_order_key),
-                context.getString(R.string.SORT_ORDER_POPULARITY));
+        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, 0);
+        return prefs.getString(context.getString(R.string.pref_sort_order_key), context.getString(R.string.SORT_ORDER_POPULARITY));
     }
 
-    public static void updatePreferredSorting(Activity activity, String sortOrder) {
-        SharedPreferences.Editor editor = activity.getPreferences(0).edit();
-        editor.putString(activity.getString(R.string.pref_sort_order_key), sortOrder);
-        editor.apply();
+    public static void updatePreferredSorting(Context context, String sortOrder) {
+        SharedPreferences settings = context.getSharedPreferences(PREFS_NAME, 0);
+        settings.edit().putString(context.getString(R.string.pref_sort_order_key), sortOrder).commit();
     }
 
 }

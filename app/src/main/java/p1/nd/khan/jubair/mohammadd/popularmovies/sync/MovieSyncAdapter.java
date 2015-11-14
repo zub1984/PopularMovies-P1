@@ -13,6 +13,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.squareup.okhttp.Callback;
 import com.squareup.okhttp.OkHttpClient;
@@ -52,12 +53,26 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
     @Override
     public void onPerformSync(Account account, Bundle extras, String authority, ContentProviderClient provider, SyncResult syncResult) {
         Log.d(LOG_TAG, "onPerformSync Called.");
-        String pSortOrder= Utility.getPreferredSorting(getContext());
-        int pPageNo=1;
+        String sortOrder= Utility.getPreferredSorting(getContext());
+        String bundleSortType = extras.getString(mContext.getString(R.string.pref_sort_order_key), mContext.getString(R.string.SORT_ORDER_POPULARITY));
+
+        //Log.d(LOG_TAG, "bundleSortType:" + bundleSortType);
+        if (!sortOrder.equals(bundleSortType)) {
+            getContext().getContentResolver().delete(MovieEntry.CONTENT_URI, null, null);
+        }
+
+        if (Utility.isNetworkAvailable(getContext())){
+            int page=extras.getInt("page", 1);
+            //Log.d(LOG_TAG, "page:" + page);
+            fetchMdbMovie(bundleSortType,page);
+        }
+        else Toast.makeText(getContext(), "No Internet Connection.", Toast.LENGTH_SHORT).show();
+    }
+
+    void fetchMdbMovie(String pSortOrder,int pPageNo ){
         OkHttpClient client = new OkHttpClient();
         String movieURL=UrlFormatter(pSortOrder, pPageNo);
-
-        Log.v(LOG_TAG, "==onPerformSync:"+movieURL);
+        Log.v(LOG_TAG, "URL:" + movieURL);
         Request request = new Request.Builder()
                 .url(movieURL)
                 .build();
@@ -66,7 +81,6 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
             public void onFailure(Request request, IOException e) {
                 Log.e(LOG_TAG, "==onFailure:", e);
             }
-
             @Override
             public void onResponse(Response response) throws IOException {
                 try {
@@ -80,7 +94,6 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
             }
         });
     }
-
 
     /**
      * Format and prepare the required URL for MDB request
@@ -146,7 +159,7 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
      * Helper method to schedule the sync adapter periodic execution
      */
     public static void configurePeriodicSync(Context context, int syncInterval, int flexTime) {
-        Account account = getSyncAccount(context);
+        Account account = getSyncAccount(context,null);
         String authority = context.getString(R.string.content_authority);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             // we can enable inexact timers in our periodic sync
@@ -165,11 +178,14 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
      * Helper method to have the sync adapter sync immediately
      * @param context The context used to access the account service
      */
-    public static void syncImmediately(Context context) {
+    public static void syncImmediately(Context context,String sortType) {
         Bundle bundle = new Bundle();
         bundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
         bundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
-        ContentResolver.requestSync(getSyncAccount(context),
+        if (null!= sortType) {
+            bundle.putString(context.getString(R.string.pref_sort_order_key), sortType);
+        }
+        ContentResolver.requestSync(getSyncAccount(context,sortType),
                 context.getString(R.string.content_authority), bundle);
     }
 
@@ -181,58 +197,43 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
      * @param context The context used to access the account service
      * @return a fake account.
      */
-    public static Account getSyncAccount(Context context) {
-        // Get an instance of the Android account manager
+    public static Account getSyncAccount(Context context,String sortType) {
         AccountManager accountManager =
                 (AccountManager) context.getSystemService(Context.ACCOUNT_SERVICE);
-
-        // Create the account type and default account
         Account newAccount = new Account(
                 context.getString(R.string.app_name), context.getString(R.string.sync_account_type));
-
-        // If the password doesn't exist, the account doesn't exist
         if ( null == accountManager.getPassword(newAccount) ) {
-
-        /*
-         * Add the account and account type, no password or user data
-         * If successful, return the Account object, otherwise report an error.
-         */
             if (!accountManager.addAccountExplicitly(newAccount, "", null)) {
                 return null;
             }
-            /*
-             * If you don't set android:syncable="true" in
-             * in your <provider> element in the manifest,
-             * then call ContentResolver.setIsSyncable(account, AUTHORITY, 1)
-             * here.
-             */
-
-            onAccountCreated(newAccount, context);
+            onAccountCreated(newAccount, context, sortType);
         }
         return newAccount;
     }
 
-
-    private static void onAccountCreated(Account newAccount, Context context) {
-        /*
-         * Since we've created an account
-         */
+    /**
+     * Method to Sync data after account creation.
+     *
+     * @param newAccount instance of new account
+     * @context The context used to access the account service.
+     * @sortType sorting order
+     */
+    private static void onAccountCreated(Account newAccount, Context context,String sortType) {
         MovieSyncAdapter.configurePeriodicSync(context, SYNC_INTERVAL, SYNC_FLEXTIME);
-
-        /*
-         * Without calling setSyncAutomatically, our periodic sync will not be enabled.
-         */
         ContentResolver.setSyncAutomatically(newAccount, context.getString(R.string.content_authority), true);
-
-        /*
-         * Finally, let's do a sync to get things started
-         */
-        syncImmediately(context);
+        syncImmediately(context,sortType);
     }
 
     public static void initializeSyncAdapter(Context context) {
-        getSyncAccount(context);
+        getSyncAccount(context, null);
     }
 
+    public static void customLoadMoreDataFromApi(Context context,int offset){
+        Bundle bundle = new Bundle();
+        bundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
+        bundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
+        bundle.putInt("page", offset);
+        ContentResolver.requestSync(getSyncAccount(context, null), context.getString(R.string.content_authority), bundle);
+    }
 
 }

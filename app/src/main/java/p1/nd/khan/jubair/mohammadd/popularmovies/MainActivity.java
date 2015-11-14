@@ -10,7 +10,6 @@ import p1.nd.khan.jubair.mohammadd.popularmovies.sync.MovieSyncAdapter;
 
 public class MainActivity extends AppCompatActivity implements MainActivityFragment.OnMoviePosterSelectedListener {
 
-    //public final String LOG_TAG = MainActivity.class.getSimpleName();
     private boolean mTwoPane;
 
     @Override
@@ -18,7 +17,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityFragm
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        MainActivityFragment mainActivityFragment =  (MainActivityFragment)getSupportFragmentManager()
+        MainActivityFragment mainActivityFragment = (MainActivityFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.fragment_main);
 
 
@@ -32,8 +31,13 @@ public class MainActivity extends AppCompatActivity implements MainActivityFragm
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
+        // fix the issue of menu option checked on start.
+        if (Utility.getPreferredSorting(this).equalsIgnoreCase(getString(R.string.SORT_ORDER_POPULARITY))) {
+            menu.findItem(R.id.action_sort_by_popular).setChecked(true);
+        } else {
+            menu.findItem(R.id.action_sort_by_rating).setChecked(true);
+        }
         return true;
     }
 
@@ -51,9 +55,9 @@ public class MainActivity extends AppCompatActivity implements MainActivityFragm
             MovieDetailActivityFragment fragment = new MovieDetailActivityFragment();
             fragment.setArguments(arguments);
             getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.fragment_movie_detail, new MovieDetailActivityFragment(), "MDA_FRAGMENT")
+                    .replace(R.id.fragment_movie_detail, new MovieDetailActivityFragment(), "MDA_FRAGMENT")
                     .commit();
-        }else{
+        } else {
             Intent detailIntent = new Intent(this, MovieDetailActivity.class);
             detailIntent.putExtra(getString(R.string.MOVIE_PARCEL), movieId);
             startActivity(detailIntent);
