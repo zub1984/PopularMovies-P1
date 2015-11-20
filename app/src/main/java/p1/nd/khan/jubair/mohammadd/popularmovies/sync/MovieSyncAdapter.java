@@ -44,29 +44,41 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
     // 60 seconds (1 minute) * 180 = 3 hours
     public static final int SYNC_INTERVAL = 60 * 180;
     public static final int SYNC_FLEXTIME = SYNC_INTERVAL/3;
+    public static final String MOVIE_ID = "movieid";
+
+    private final TrailerSyncAdapter trailerSyncAdapter;
+    private final ReviewSyncAdapter reviewSyncAdapter;
 
     public MovieSyncAdapter(Context context, boolean autoInitialize) {
         super(context, autoInitialize);
         mContext=context;
+        trailerSyncAdapter = new TrailerSyncAdapter(context);
+        reviewSyncAdapter=new ReviewSyncAdapter(context);
     }
 
     @Override
     public void onPerformSync(Account account, Bundle extras, String authority, ContentProviderClient provider, SyncResult syncResult) {
         Log.d(LOG_TAG, "onPerformSync Called.");
-        String sortOrder= Utility.getPreferredSorting(getContext());
-        String bundleSortType = extras.getString(mContext.getString(R.string.pref_sort_order_key), mContext.getString(R.string.SORT_ORDER_POPULARITY));
-
-        //Log.d(LOG_TAG, "bundleSortType:" + bundleSortType);
-        if (!sortOrder.equals(bundleSortType)) {
-            getContext().getContentResolver().delete(MovieEntry.CONTENT_URI, null, null);
+        if (extras.containsKey(MOVIE_ID)) {
+            trailerSyncAdapter.onPerformSync(account, extras, authority, provider, syncResult);
+            reviewSyncAdapter.onPerformSync(account, extras, authority, provider, syncResult);
         }
+        else
+        {
+            String sortOrder = Utility.getPreferredSorting(getContext());
+            String bundleSortType = extras.getString(mContext.getString(R.string.pref_sort_order_key), mContext.getString(R.string.SORT_ORDER_POPULARITY));
 
-        if (Utility.isNetworkAvailable(getContext())){
-            int page=extras.getInt("page", 1);
-            //Log.d(LOG_TAG, "page:" + page);
-            fetchMdbMovie(bundleSortType,page);
+            if (!sortOrder.equals(bundleSortType)) {
+                getContext().getContentResolver().delete(MovieEntry.CONTENT_URI, null, null);
+            }
+
+            if (Utility.isNetworkAvailable(getContext())) {
+                int page = extras.getInt("page", 1);
+                Log.v(LOG_TAG, "page:" + page);
+                fetchMdbMovie(bundleSortType, page);
+            } else
+                Toast.makeText(getContext(), "No Internet Connection.", Toast.LENGTH_SHORT).show();
         }
-        else Toast.makeText(getContext(), "No Internet Connection.", Toast.LENGTH_SHORT).show();
     }
 
     void fetchMdbMovie(String pSortOrder,int pPageNo ){
@@ -120,7 +132,7 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
      *
      * @param mdbJsonStr : JSON string response
      */
-    private List<ContentValues> insertMovieContentValues(String mdbJsonStr)
+    private void insertMovieContentValues(String mdbJsonStr)
             throws JSONException {
         int result = 0;
 
@@ -151,7 +163,6 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
                     moviesList.toArray(new ContentValues[moviesList.size()]));
         }
         Log.v(LOG_TAG, "===insertMovieContents: " + result);
-        return moviesList;
     }
 
 
@@ -175,8 +186,9 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
     }
 
     /**
-     * Helper method to have the sync adapter sync immediately
+     * Helper method to have the sync adapter immediately
      * @param context The context used to access the account service
+     * @param sortType The sorting to be used.
      */
     public static void syncImmediately(Context context,String sortType) {
         Bundle bundle = new Bundle();
@@ -190,11 +202,28 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
     }
 
     /**
+     * Helper method to have the sync adapter immediately
+     * @param context The context used to access the account service
+     * @param movieId The Movie to be sync
+     */
+    public static void syncMovieDetails(Context context, String movieId) {
+        Bundle bundle = new Bundle();
+        bundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
+        bundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
+        if (null!= movieId) {
+            bundle.putString(MOVIE_ID, movieId);
+        }
+        ContentResolver.requestSync(getSyncAccount(context, movieId),
+                context.getString(R.string.content_authority), bundle);
+    }
+
+    /**
      * Helper method to get the fake account to be used with SyncAdapter, or make a new one
      * if the fake account doesn't exist yet.  If we make a new account, we call the
      * onAccountCreated method so we can initialize things.
      *
      * @param context The context used to access the account service
+     * @param sortType The sorting to be used.
      * @return a fake account.
      */
     public static Account getSyncAccount(Context context,String sortType) {
@@ -215,8 +244,8 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
      * Method to Sync data after account creation.
      *
      * @param newAccount instance of new account
-     * @context The context used to access the account service.
-     * @sortType sorting order
+     * @param context The context used to access the account service.
+     * @param sortType sorting order
      */
     private static void onAccountCreated(Account newAccount, Context context,String sortType) {
         MovieSyncAdapter.configurePeriodicSync(context, SYNC_INTERVAL, SYNC_FLEXTIME);
@@ -228,7 +257,13 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
         getSyncAccount(context, null);
     }
 
-    public static void customLoadMoreDataFromApi(Context context,int offset){
+    /**
+     * Method to load more data based on scrolling.
+     *
+     * @param context The context used to load more movie.
+     * @param offset page number to request/load the data.
+     */
+    public static void loadMoreData(Context context,int offset){
         Bundle bundle = new Bundle();
         bundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
         bundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);

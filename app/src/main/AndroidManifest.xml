@@ -37,9 +37,17 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="p1.nd.khan.jubair.mohammadd.popularmovies.MainActivity" />
         </activity>
+
+        <!-- define the provider class -->
         <provider
             android:authorities="p1.nd.khan.jubair.mohammadd.popularmovies.app"
             android:name=".data.MovieProvider" />
+
+        <provider
+            android:name=".data.FavoritesProvider"
+            android:authorities="@string/content_authority_favorites"
+            android:exported="false"
+            android:syncable="true" />
 
         <!-- SyncAdapter's dummy authentication service -->
         <service android:name=".sync.MovieAuthenticatorService">

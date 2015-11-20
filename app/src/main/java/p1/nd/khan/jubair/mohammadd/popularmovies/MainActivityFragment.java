@@ -50,7 +50,6 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
     OnMoviePosterSelectedListener mCallback;
     private MovieAdapter mMovieAdapter;
     private String mSortOrder;
-    private int PAGE_NO;
     private String optionSelected;
 
     public static final String DB_ORDER_POPULARITY = MovieEntry.C_VOTE_COUNT + " DESC," + MovieEntry._ID + " ASC";
@@ -111,27 +110,17 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
     public void onSaveInstanceState(Bundle outState) {
         // Always call the superclass so it can save the view hierarchy state
         super.onSaveInstanceState(outState);
-
         int position = mGridView.getFirstVisiblePosition();
         outState.putInt(SELECTED_KEY, position);
         outState.putParcelable(SELECTED_GRID_VIEW, mGridView.onSaveInstanceState());
-
-        /*if (mPosition != GridView.INVALID_POSITION) {
-            outState.putInt(SELECTED_KEY, mPosition);
-        }*/
     }
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         if (null != mCallback) {
-            // increment the position to match Database Ids indexed starting at 1
-            //int uriId = position + 1;
-            //Log.v(LOG_TAG, "==onItemClick,uriId:" + uriId);
-            // CursorAdapter returns a cursor at the correct position for getItem(), or null
-            // if it cannot seek to that position.
             Cursor cursor = (Cursor) parent.getItemAtPosition(position);
             if (cursor != null) {
-                mCallback.onMoviePosterSelected(cursor.getInt(MainActivityFragment.C_MOVIE_ID));
+                mCallback.onMoviePosterSelected(cursor.getInt(MainActivityFragment.C_MOVIE_ID),mSortOrder);
             }
             mPosition =position;
         }
@@ -146,7 +135,11 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
             case R.id.action_sort_by_rating:
                 optionSelected = getString(R.string.SORT_ORDER_RATING);
                 break;
+            case R.id.action_show_favorites:
+                optionSelected = getString(R.string.SORT_ORDER_FAVORITE);
+                break;
         }
+
         item.setChecked(true);
         onSortingOptionChanged(optionSelected);
         return super.onOptionsItemSelected(item);
@@ -158,10 +151,11 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
 
             Bundle bundle = new Bundle();
             bundle.putString(getString(R.string.pref_sort_order_key), optionSelected);
-
             getLoaderManager().restartLoader(CURSOR_LOADER_ID, bundle, this);
 
+            if(!optionSelected.equalsIgnoreCase(getString(R.string.SORT_ORDER_FAVORITE)))
             MovieSyncAdapter.syncImmediately(getActivity(), mSortOrder);
+
             mMovieAdapter.notifyDataSetChanged();
     }
 
@@ -178,7 +172,7 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
         mGridView.setOnScrollListener(new EndlessScrollListener() {
             @Override
             public boolean onLoadMore(int page, int totalItemsCount) {
-                MovieSyncAdapter.customLoadMoreDataFromApi(getContext(),page);
+                MovieSyncAdapter.loadMoreData(getContext(), page);
                 return true;
             }
         });
@@ -209,7 +203,7 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
     // Attach loader to our flavors database query run when loader is initialized
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args){
-        Uri provider = MovieEntry.CONTENT_URI.buildUpon().appendPath("*").build();
+        Uri provider = MovieEntry.CONTENT_URI;
         return new CursorLoader(getActivity(),
                 provider,
                 MOVIE_LIST_COLUMNS,
@@ -237,6 +231,6 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
        http://developer.android.com/training/basics/fragments/communicating.html
        Communicating with Other Fragments*/
     public interface OnMoviePosterSelectedListener {
-        void onMoviePosterSelected(int movieId);
+        void onMoviePosterSelected(int movieId,String mSortOrder);
     }
 }

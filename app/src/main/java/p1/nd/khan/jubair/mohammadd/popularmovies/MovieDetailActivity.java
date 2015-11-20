@@ -17,9 +17,12 @@ public class MovieDetailActivity extends AppCompatActivity {
             arguments.putInt(getString(R.string.MOVIE_PARCEL), getIntent().getIntExtra(getString(R.string.MOVIE_PARCEL), GridView.INVALID_POSITION));
             MovieDetailActivityFragment fragment = new MovieDetailActivityFragment();
             fragment.setArguments(arguments);
-            getSupportFragmentManager().beginTransaction()
+            /*getSupportFragmentManager().beginTransaction()
                     .replace(R.id.fragment_movie_detail, new MovieDetailActivityFragment(), "MDA_FRAGMENT")
-                    .commit();
+                    .commit();*/
+            getFragmentManager().beginTransaction().
+                    add(R.id.fragment_movie_detail, fragment).
+                    commit();
         }
     }
 }

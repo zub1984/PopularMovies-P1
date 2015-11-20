@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="MOVIE_ID" type="id" />
+    <item name="LIST_ITEM_ICON" type="id" />
+    <item name="TRAILER_KEY" type="id" />
+    <item name="FAVORITES_KEY" type="id" />
+    <item name="SHARE_KEY" type="id" />
+    <item name="SHARE_NAME" type="id" />
+    <item name="REVIEW_URL" type="id" />
+</resources>

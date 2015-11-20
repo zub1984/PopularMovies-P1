@@ -20,7 +20,6 @@ public class MainActivity extends AppCompatActivity implements MainActivityFragm
         MainActivityFragment mainActivityFragment = (MainActivityFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.fragment_main);
 
-
         if (findViewById(R.id.fragment_movie_detail) != null) {
             mTwoPane = true;
             mainActivityFragment.setActivateOnItemClick(true);
@@ -33,11 +32,16 @@ public class MainActivity extends AppCompatActivity implements MainActivityFragm
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_main, menu);
         // fix the issue of menu option checked on start.
-        if (Utility.getPreferredSorting(this).equalsIgnoreCase(getString(R.string.SORT_ORDER_POPULARITY))) {
+        String sOrder=Utility.getPreferredSorting(this);
+
+        if (sOrder.equalsIgnoreCase(getString(R.string.SORT_ORDER_POPULARITY)))
             menu.findItem(R.id.action_sort_by_popular).setChecked(true);
-        } else {
+
+        else if(sOrder.equalsIgnoreCase(getString(R.string.SORT_ORDER_RATING)))
             menu.findItem(R.id.action_sort_by_rating).setChecked(true);
-        }
+
+        else menu.findItem(R.id.action_show_favorites).setChecked(true);
+
         return true;
     }
 
@@ -48,18 +52,22 @@ public class MainActivity extends AppCompatActivity implements MainActivityFragm
 
     // The user selected the movie poster from the MainActivityFragment
     // Send movie details to MovieDetailActivityFragment for display.
-    public void onMoviePosterSelected(int movieId) {
+    public void onMoviePosterSelected(int movieId,String mSortOrder) {
+
+        Bundle bundle = new Bundle();
+        bundle.putInt(getString(R.string.MOVIE_PARCEL), movieId);
+        bundle.putString(getString(R.string.pref_sort_order_key), mSortOrder);
+
         if (mTwoPane) {
-            Bundle arguments = new Bundle();
-            arguments.putInt(getString(R.string.MOVIE_PARCEL), movieId);
             MovieDetailActivityFragment fragment = new MovieDetailActivityFragment();
-            fragment.setArguments(arguments);
-            getSupportFragmentManager().beginTransaction()
+            fragment.setArguments(bundle);
+            getFragmentManager().beginTransaction().replace(R.id.fragment_movie_detail, fragment).commit();
+            /*getSupportFragmentManager().beginTransaction()
                     .replace(R.id.fragment_movie_detail, new MovieDetailActivityFragment(), "MDA_FRAGMENT")
-                    .commit();
+                    .commit();*/
         } else {
             Intent detailIntent = new Intent(this, MovieDetailActivity.class);
-            detailIntent.putExtra(getString(R.string.MOVIE_PARCEL), movieId);
+            detailIntent.putExtras(bundle);
             startActivity(detailIntent);
         }
 
