@@ -141,6 +141,8 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
 
         List<ContentValues> moviesList = new ArrayList<>();
 
+        Log.v(LOG_TAG, "===[number of movies records]: " + moviesArray.length());
+
         for (int i = 0; i < moviesArray.length(); i++) {
             // Get the JSON object representing the movie
             JSONObject mAttributes = moviesArray.getJSONObject(i);

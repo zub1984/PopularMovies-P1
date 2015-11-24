@@ -86,7 +86,7 @@ public class MovieContract {
         // Table name
         public static final String TABLE_NAME = "reviews";
 
-        public static final String C_MOVIE_ID = "movie_id";
+        public static final String C_MOVIE_ID = "id";
         public static final String C_REVIEW_ID = "review_id";
         public static final String C_AUTHOR = "author";
         public static final String C_CONTENT = "content";

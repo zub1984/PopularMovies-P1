@@ -13,7 +13,7 @@ import p1.nd.khan.jubair.mohammadd.popularmovies.data.MovieContract.TrailersEntr
  */
 public class MovieDbHelper extends SQLiteOpenHelper {
 
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
     private static final String DATABASE_NAME = "movies.db";
 
     public MovieDbHelper(Context context) {

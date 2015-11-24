@@ -11,6 +11,8 @@ import android.widget.ImageView;
 
 import com.squareup.picasso.Picasso;
 
+import butterknife.Bind;
+import butterknife.ButterKnife;
 import p1.nd.khan.jubair.mohammadd.popularmovies.MainActivityFragment;
 import p1.nd.khan.jubair.mohammadd.popularmovies.R;
 
@@ -19,24 +21,19 @@ import p1.nd.khan.jubair.mohammadd.popularmovies.R;
  */
 public class MovieAdapter extends CursorAdapter {
 
-    private static final String LOG_TAG = MovieAdapter.class.getSimpleName();
-    private Context mContext;
-    private static int sLoaderID;
-
     private final static int MOVIE_LIST = 0;
 
     public static class ViewHolder {
-        public final ImageView imageView;
+        @Bind(R.id.movie_poster_image)
+        ImageView posterImage;
+
         public ViewHolder(View view) {
-            imageView = (ImageView) view.findViewById(R.id.movie_poster_image);
+            ButterKnife.bind(this, view);
         }
     }
 
     public MovieAdapter(Context context, Cursor c, int flags, int loaderID) {
         super(context, c, flags);
-        //Log.d(LOG_TAG, "MovieAdapter");
-        mContext = context;
-        sLoaderID = loaderID;
     }
 
     @Override
@@ -58,11 +55,10 @@ public class MovieAdapter extends CursorAdapter {
     public void bindView(View view, Context context, Cursor cursor) {
         ViewHolder viewHolder = (ViewHolder) view.getTag();
         String posterPath = cursor.getString(MainActivityFragment.C_POSTER_PATH);
-        //Log.i(LOG_TAG, "Image reference extracted: " + posterPath);
         if (posterPath != null) {
-            Picasso.with(context).load(context.getString(R.string.POSTER_IMAGE_URL) + "/" + posterPath).into(viewHolder.imageView);
+            Picasso.with(context).load(context.getString(R.string.POSTER_IMAGE_URL) + "/" + posterPath).into(viewHolder.posterImage);
         } else {
-            viewHolder.imageView.setImageDrawable(ContextCompat.getDrawable(context, R.mipmap.ic_movie));
+            viewHolder.posterImage.setImageDrawable(ContextCompat.getDrawable(context, R.mipmap.ic_movie));
         }
     }
 }

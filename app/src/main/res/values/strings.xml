@@ -30,7 +30,6 @@
     <string name="PERSONAL_API_KEY">[PERSONAL_API_KEY]</string>
 
 
-
     <string name="MDB_POPULAR_MOVIE_URL">http://api.themoviedb.org/3/discover/movie?</string>
     <string name="POSTER_IMAGE_URL">http://image.tmdb.org/t/p/w185</string>
     <string name="BACK_DROP_IMAGE_URL">http://image.tmdb.org/t/p/w342</string>
@@ -45,7 +44,8 @@
 
 
     <string name="MOVIE_PARCEL">movie_id</string>
-    <string name="ADD_2_FAVORITES">Added \"{0}\" to favorites.</string>
+    <string name="ADD_TO_FAVORITES">Added \"{0}\" to favorites.</string>
+    <string name="DEL_FROM_FAVORITES">Deleted from favorites.</string>
 
     <!-- themoviedb.org : Parameter details requires for PopularMovies App -->
 

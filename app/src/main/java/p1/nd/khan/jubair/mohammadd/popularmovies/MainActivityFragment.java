@@ -2,7 +2,6 @@ package p1.nd.khan.jubair.mohammadd.popularmovies;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.v4.app.Fragment;
@@ -19,7 +18,6 @@ import android.widget.GridView;
 import android.widget.ListView;
 
 import p1.nd.khan.jubair.mohammadd.popularmovies.adapter.MovieAdapter;
-import p1.nd.khan.jubair.mohammadd.popularmovies.data.MovieContract;
 import p1.nd.khan.jubair.mohammadd.popularmovies.listener.EndlessScrollListener;
 import p1.nd.khan.jubair.mohammadd.popularmovies.sync.MovieSyncAdapter;
 
@@ -56,7 +54,7 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
     public static final String DB_ORDER_RATING = MovieEntry.C_VOTE_AVERAGE + " DESC," + MovieEntry._ID + " ASC";
 
     private static final String[] MOVIE_LIST_COLUMNS = {
-            MovieContract.MovieEntry._ID,
+            MovieEntry._ID,
             MovieEntry.C_MOVIE_ID,
             MovieEntry.C_POSTER_PATH
     };
@@ -70,6 +68,7 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
     private static final String SELECTED_GRID_VIEW = "selected_grid_view";
 
     GridView mGridView;
+
 
     public MainActivityFragment() {
     }
@@ -147,16 +146,15 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
 
     // since we read the location when we create the loader, all we need to do is restart things
     private void onSortingOptionChanged(String optionSelected) {
-            mSortOrder = optionSelected;
-
             Bundle bundle = new Bundle();
             bundle.putString(getString(R.string.pref_sort_order_key), optionSelected);
             getLoaderManager().restartLoader(CURSOR_LOADER_ID, bundle, this);
 
-            if(!optionSelected.equalsIgnoreCase(getString(R.string.SORT_ORDER_FAVORITE)))
+        mSortOrder = optionSelected;
+        if(!optionSelected.equalsIgnoreCase(getString(R.string.SORT_ORDER_FAVORITE)))
             MovieSyncAdapter.syncImmediately(getActivity(), mSortOrder);
 
-            mMovieAdapter.notifyDataSetChanged();
+        mMovieAdapter.notifyDataSetChanged();
     }
 
     @Override
@@ -169,6 +167,8 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
         mGridView = (GridView) rootView.findViewById(R.id.movie_list_gridview);
         mGridView.setAdapter(mMovieAdapter);
         mGridView.setOnItemClickListener(this);
+
+
         mGridView.setOnScrollListener(new EndlessScrollListener() {
             @Override
             public boolean onLoadMore(int page, int totalItemsCount) {
@@ -203,13 +203,13 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
     // Attach loader to our flavors database query run when loader is initialized
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args){
-        Uri provider = MovieEntry.CONTENT_URI;
-        return new CursorLoader(getActivity(),
-                provider,
-                MOVIE_LIST_COLUMNS,
-                null,
-                null,
-                DB_ORDER_POPULARITY);
+
+        String sortOrder = args.getString(getString(R.string.pref_sort_order_key), getString(R.string.SORT_ORDER_POPULARITY));
+        if (sortOrder.equals(getString(R.string.SORT_ORDER_FAVORITE)))
+            return new CursorLoader(getActivity(), MovieEntry.FAVORITES_CONTENT_URI, MOVIE_LIST_COLUMNS, null, null, null);
+        else
+            return new CursorLoader(getActivity(), MovieEntry.CONTENT_URI, MOVIE_LIST_COLUMNS, null, null,
+                    sortOrder.equals(getString(R.string.SORT_ORDER_POPULARITY)) ? DB_ORDER_POPULARITY : DB_ORDER_RATING);
     }
 
     @Override
@@ -231,6 +231,6 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
        http://developer.android.com/training/basics/fragments/communicating.html
        Communicating with Other Fragments*/
     public interface OnMoviePosterSelectedListener {
-        void onMoviePosterSelected(int movieId,String mSortOrder);
+        void onMoviePosterSelected(int movieId, String mSortOrder);
     }
 }

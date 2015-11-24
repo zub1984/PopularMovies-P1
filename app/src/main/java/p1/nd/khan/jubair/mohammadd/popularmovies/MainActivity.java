@@ -11,7 +11,6 @@ import p1.nd.khan.jubair.mohammadd.popularmovies.sync.MovieSyncAdapter;
 public class MainActivity extends AppCompatActivity implements MainActivityFragment.OnMoviePosterSelectedListener {
 
     private boolean mTwoPane;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
