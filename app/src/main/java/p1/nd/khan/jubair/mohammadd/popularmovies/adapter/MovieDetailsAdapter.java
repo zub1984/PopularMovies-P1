@@ -210,13 +210,13 @@ public class MovieDetailsAdapter extends CursorAdapter {
         Picasso.with(context)
                 .load(context.getString(R.string.BACK_DROP_IMAGE_URL) + data.getString(data.getColumnIndex(MovieEntry.C_BACKDROP_PATH)))
                 .placeholder(R.drawable.placeholder)
-                .error(R.drawable.placeholder_error)
+                .error(R.drawable.placeholder)
                 .into(movieHolder.mBackdropPath);
 
         Picasso.with(context)
                 .load(context.getString(R.string.POSTER_IMAGE_URL) + data.getString(data.getColumnIndex(MovieEntry.C_POSTER_PATH)))
                 .placeholder(R.drawable.placeholder)
-                .error(R.drawable.placeholder_error)
+                .error(R.drawable.placeholder)
                 .into(movieHolder.mPosterUrl);
 
         movieHolder.mRatingStar.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.ic_star_rate_black_18dp));

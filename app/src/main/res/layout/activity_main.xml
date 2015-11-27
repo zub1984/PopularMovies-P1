@@ -1,7 +1,17 @@
-<fragment xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/fragment_main"
-    android:name="p1.nd.khan.jubair.mohammadd.popularmovies.MainActivityFragment"
+    android:id="@+id/main_content"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:layout="@layout/fragment_main" />
+    android:layout_height="match_parent">
+
+  <include layout="@layout/toolbar" />
+
+    <fragment xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/fragment_main"
+        android:name="p1.nd.khan.jubair.mohammadd.popularmovies.MainActivityFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:layout="@layout/fragment_main" />
+
+</android.support.design.widget.CoordinatorLayout>

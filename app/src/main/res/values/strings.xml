@@ -12,6 +12,9 @@
     <string name="action_sort_by_rating" translatable="false">Ratings</string>
     <string name="action_show_favorites" translatable="false">Favorites</string>
 
+    <!-- menu option for movei details -->
+    <string name="share">Share</string>
+
 
     <string name="action_settings">Settings</string>
     <string name="title_activity_movie_detail">Movie Details</string>
@@ -38,18 +41,15 @@
     <string name="MOVIE_TRAILER_URL">http://api.themoviedb.org/3/movie/{0}/videos</string>
 
 
-
     <string name="youtube_url">http://www.youtube.com/watch?v={0}</string>
     <string name="youtube_thumbnail_url">http://img.youtube.com/vi/{0}/default.jpg</string>
 
 
-    <string name="MOVIE_PARCEL">movie_id</string>
     <string name="ADD_TO_FAVORITES">Added \"{0}\" to favorites.</string>
     <string name="DEL_FROM_FAVORITES">Deleted from favorites.</string>
 
     <!-- themoviedb.org : Parameter details requires for PopularMovies App -->
 
-    <string name="pref_sort_order_key" translatable="false">sort_mode</string>
     <string name="SORT_ORDER_POPULARITY" translatable="false">popularity.desc</string>
     <string name="SORT_ORDER_RATING" translatable="false">vote_average.desc</string>
     <string name="SORT_ORDER_FAVORITE" translatable="false">favorite.id</string>

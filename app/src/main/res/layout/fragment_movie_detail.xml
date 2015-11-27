@@ -1,133 +1,19 @@
-<?xml version="1.0" encoding="utf-8"?>
+
 <android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/movie_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:id="@+id/movie_container"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:fitsSystemWindows="true">
 
-    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
+   <include
+        android:id="@+id/appbar"
+        layout="@layout/include_toolbar_movie_details" />
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical">
+    <include
+        android:id="@+id/include_movie_details"
+        layout="@layout/include_movie_details" />
 
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <ImageView
-                    android:id="@+id/backdrop"
-                    android:layout_width="match_parent"
-                    android:layout_height="180dp"
-                    android:contentDescription="@string/backdrop_image_description"
-                    android:scaleType="centerCrop" />
-
-                <TextView
-                    android:id="@+id/original_title"
-                    style="@style/movieTitle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentTop="true"
-                    android:layout_centerInParent="true" />
-
-                <ImageView
-                    android:id="@+id/poster"
-                    android:layout_width="wrap_content"
-                    android:layout_height="140dp"
-                    android:layout_alignBottom="@id/backdrop"
-                    android:layout_alignLeft="@id/backdrop"
-                    android:contentDescription="@string/image_poster_description"
-                    android:scaleType="fitStart"
-                    android:theme="@style/AppTheme" />
-
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <TextView
-                    android:id="@+id/release_date_level"
-                    style="@style/movieSubHeading"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:paddingLeft="5dp"
-                    android:text="@string/release_date" />
-
-                <TextView
-                    android:id="@+id/release_date"
-                    style="@style/movieSubHeading"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_toEndOf="@+id/release_date_level"
-                    android:layout_toRightOf="@+id/release_date_level"
-                    android:text="@string/release_date" />
-
-                <TextView
-                    android:id="@+id/rating"
-                    style="@style/movieSubHeading"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentEnd="true"
-                    android:layout_alignParentRight="true"
-                    android:paddingRight="5dp"
-                    android:text="@string/rating_out_of_ten" />
-
-                <ImageView
-                    android:id="@+id/ratingStar"
-                    style="@style/ratingStar"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_toLeftOf="@+id/rating"
-                    android:layout_toStartOf="@+id/rating"
-                    android:contentDescription="@string/rating_image" />
-            </RelativeLayout>
-        </LinearLayout>
-
-        <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:clipToPadding="false"
-            android:paddingTop="210dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:orientation="vertical">
-
-                <TextView
-                    android:id="@+id/overview_level"
-                    style="?android:attr/textAppearanceLarge"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:padding="5dp"
-                    android:scrollbars="vertical"
-                    android:text="Overview"
-                    android:textSize="24sp" />
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:background="@android:color/darker_gray"></View>
-
-                <TextView
-                    android:id="@+id/overview"
-                    style="@style/movieBodyText"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:paddingBottom="5dp"
-                    android:paddingLeft="5dp"
-                    android:paddingRight="5dp"
-                    android:paddingTop="7dp" />
-            </LinearLayout>
-        </ScrollView>
-
-    </RelativeLayout>
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/favorite_fab"
         android:layout_width="wrap_content"
@@ -136,6 +22,8 @@
         android:clickable="true"
         android:src="@drawable/ic_favorite_blank"
         app:elevation="4dp"
-        app:layout_anchor="@id/overview_level"
+        app:layout_anchor="@id/appbar"
         app:layout_anchorGravity="bottom|right|end" />
+
 </android.support.design.widget.CoordinatorLayout>
+

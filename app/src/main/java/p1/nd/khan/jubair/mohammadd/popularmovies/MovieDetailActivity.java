@@ -1,11 +1,13 @@
 package p1.nd.khan.jubair.mohammadd.popularmovies;
 
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
+import android.view.MenuItem;
 import android.widget.GridView;
 
+import p1.nd.khan.jubair.mohammadd.popularmovies.utils.Constants;
 
-public class MovieDetailActivity extends AppCompatActivity {
+
+public class MovieDetailActivity extends BaseActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -14,7 +16,7 @@ public class MovieDetailActivity extends AppCompatActivity {
 
         if (savedInstanceState == null) {
             Bundle arguments = new Bundle();
-            arguments.putInt(getString(R.string.MOVIE_PARCEL), getIntent().getIntExtra(getString(R.string.MOVIE_PARCEL), GridView.INVALID_POSITION));
+            arguments.putInt(Constants.MOVIE_ID_KEY, getIntent().getIntExtra(Constants.MOVIE_ID_KEY, GridView.INVALID_POSITION));
             MovieDetailActivityFragment fragment = new MovieDetailActivityFragment();
             fragment.setArguments(arguments);
             /*getSupportFragmentManager().beginTransaction()
@@ -24,5 +26,17 @@ public class MovieDetailActivity extends AppCompatActivity {
                     add(R.id.fragment_movie_detail, fragment).
                     commit();
         }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                onBackPressed();
+                return true;
+            default:
+                break;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }

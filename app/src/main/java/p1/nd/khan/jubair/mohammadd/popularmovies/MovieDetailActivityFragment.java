@@ -11,15 +11,25 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.support.annotation.Nullable;
+import android.support.design.widget.Snackbar;
+import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
 
+import butterknife.Bind;
+import butterknife.ButterKnife;
 import p1.nd.khan.jubair.mohammadd.popularmovies.adapter.MovieDetailsAdapter;
 import p1.nd.khan.jubair.mohammadd.popularmovies.data.MovieContract;
 import p1.nd.khan.jubair.mohammadd.popularmovies.data.MovieContract.MovieEntry;
 import p1.nd.khan.jubair.mohammadd.popularmovies.sync.MovieSyncAdapter;
+import p1.nd.khan.jubair.mohammadd.popularmovies.utils.Constants;
 
 /**
  * A placeholder fragment containing a simple view.
@@ -30,15 +40,24 @@ public class MovieDetailActivityFragment extends Fragment implements LoaderManag
 
     private final String LOG_TAG = MovieDetailActivityFragment.class.getSimpleName();
 
-    public static final String LIST_VIEW_STATE = "list_view_state";
-    public static final String FAVORITES = "favorites";
-    private static final int CURSOR_DETAIL_LOADER_ID = 0;
     private int mMovieId = -1;
     private boolean mFavorite;
     private ListView mListView;
     private MovieDetailsAdapter mMovieDetailsAdapter;
     private Parcelable mRestoreListViewState;
     private CursorLoader mMovieDetailLoader;
+
+
+    @Nullable
+    @Bind(R.id.toolbar)
+    Toolbar mToolbar;
+
+
+    public static MovieDetailActivityFragment newInstance(Bundle bundle) {
+        MovieDetailActivityFragment fragment = new MovieDetailActivityFragment();
+        fragment.setArguments(bundle);
+        return fragment;
+    }
 
     public MovieDetailActivityFragment() {
         // do nothing
@@ -47,21 +66,57 @@ public class MovieDetailActivityFragment extends Fragment implements LoaderManag
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
+
+        Log.v(LOG_TAG, "[onCreate called]");
 
         Intent intent = getActivity().getIntent();
         if (null != intent) {
-            mMovieId = intent.getIntExtra(getString(R.string.MOVIE_PARCEL), -1);
-            mFavorite = intent.getStringExtra(getString(R.string.pref_sort_order_key)).equals(getString(R.string.SORT_ORDER_FAVORITE));
+            mMovieId = intent.getIntExtra(Constants.MOVIE_ID_KEY, -1);
+            mFavorite = intent.getStringExtra(Constants.SORTING_KEY).equals(getString(R.string.SORT_ORDER_FAVORITE));
         }
         if(!mFavorite) mFavorite=isMovieFavorite(mMovieId);
         if (!mFavorite) MovieSyncAdapter.syncMovieDetails(getActivity(), Integer.toString(mMovieId));
+    }
+
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.details_menu, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                getActivity().onBackPressed();
+                return true;
+            case R.id.share_movie:
+                Snackbar.make(getView(), "details menu", Snackbar.LENGTH_SHORT).show();
+                //openShareIntent(mMainTrailer);
+                return true;
+            default:
+                break;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
-        mListView = (ListView) rootView.findViewById(R.id.detail_movie_container);
+
+        Log.v(LOG_TAG, "[onCreateView called]");
+
+        /*--------------------set the tool bar ------------------------*/
+        ButterKnife.bind(this, rootView);
+        if (getActivity() instanceof MovieDetailActivity) {
+            MovieDetailActivity detailActivity = (MovieDetailActivity) getActivity();
+            detailActivity.setToolbar(mToolbar, true, false);
+        }
+         /*--------------------set the tool bar ------------------------*/
+
+        mListView = (ListView) rootView.findViewById(R.id.fragment_detail_movie_container);
         mMovieDetailsAdapter = new MovieDetailsAdapter(getActivity(), null, 0, mFavorite);
         mListView.setAdapter(mMovieDetailsAdapter);
         return rootView;
@@ -69,23 +124,23 @@ public class MovieDetailActivityFragment extends Fragment implements LoaderManag
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
-        outState.putInt(getString(R.string.MOVIE_PARCEL), mMovieId);
-        outState.putBoolean(FAVORITES, mFavorite);
-        outState.putParcelable(LIST_VIEW_STATE, mListView.onSaveInstanceState());
+        outState.putInt(Constants.MOVIE_ID_KEY, mMovieId);
+        outState.putBoolean(Constants.FAVORITES, mFavorite);
+        outState.putParcelable(Constants.LIST_VIEW_STATE, mListView.onSaveInstanceState());
         super.onSaveInstanceState(outState);
     }
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         Bundle bundle = new Bundle();
-        bundle.putInt(getString(R.string.MOVIE_PARCEL), mMovieId);
-        getLoaderManager().initLoader(CURSOR_DETAIL_LOADER_ID, bundle, this);
+        bundle.putInt(Constants.MOVIE_ID_KEY, mMovieId);
+        getLoaderManager().initLoader(Constants.CURSOR_DETAIL_LOADER_ID, bundle, this);
         super.onActivityCreated(savedInstanceState);
     }
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        if (id == CURSOR_DETAIL_LOADER_ID && args.containsKey(getString(R.string.MOVIE_PARCEL))) {
+        if (id == Constants.CURSOR_DETAIL_LOADER_ID && args.containsKey(Constants.MOVIE_ID_KEY)) {
             Uri baseContentUri = mFavorite ? MovieContract.FAVORITES_BASE_CONTENT_URI : MovieContract.BASE_CONTENT_URI;
             Uri.Builder builder = baseContentUri.buildUpon()
                     .appendPath(MovieContract.MOVIES_PATH)

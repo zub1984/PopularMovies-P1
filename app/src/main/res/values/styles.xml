@@ -1,11 +1,22 @@
 <resources>
 
     <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
-        <!-- Customize your theme here. -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:textColorPrimary">@color/colorPrimaryText</item>
+        <item name="android:textColorSecondary">@color/colorSecondaryText</item>
+        <item name="android:windowBackground">@color/colorTextWhite</item>
+        <item name="toolbarStyle">@style/Toolbar</item>
+        <item name="android:actionMenuTextColor">@color/colorPrimary</item>
     </style>
 
-    <!-- As per android Material Design Guideline titl should be 20sp medium, White text on dark backgrounds. -->
+    <style name="Toolbar" parent="Widget.AppCompat.Toolbar">
+        <item name="popupTheme">@style/Theme.AppCompat.Light</item>
+    </style>
+
+
     <style name="movieTitle">
         <item name="android:textColor">#000000</item>
         <item name="android:textAllCaps">true</item>
@@ -13,22 +24,67 @@
         <item name="android:textAppearance">@style/Base.TextAppearance.AppCompat.Title</item>
     </style>
 
-    <!-- As per android Material Design Guideline bogy font size should be 14sp regular. -->
-    <style name="movieBodyText">
-        <item name="android:textSize">14sp</item>
-        <item name="android:textAppearance">@style/Base.TextAppearance.AppCompat.Body1</item>
-        <item name="android:text">Summary of the movie details</item>
+
+    <style name="MovieOverViewContent" parent="TextAppearance.AppCompat.Body2">
+        <item name="android:textColor">@color/colorSecondaryText</item>
+        <item name="android:padding">@dimen/text_padding_8dp</item>
     </style>
 
-    <!-- As per android Material Design Guideline subheading font size should be 16sp regular. -->
-    <style name="movieSubHeading">
-        <item name="android:textSize">16sp</item>
-        <item name="android:textAppearance">@style/Base.TextAppearance.AppCompat.Subhead</item>
-        <item name="android:text">Summary of the movie details</item>
+    <style name="MovieDetailTitle" parent="TextAppearance.AppCompat.Title">
+        <item name="android:textColor">@color/colorTextWhite</item>
+        <item name="android:layout_marginLeft">@dimen/text_margin_left</item>
+        <item name="android:layout_marginTop">@dimen/text_margin_top</item>
+        <item name="android:textSize">@dimen/title_text_size</item>
+        <item name="android:layout_height">wrap_content</item>
     </style>
 
-    <style name="ratingStar">
-        <item name="android:drawable">@drawable/ic_star_rate_black_18dp</item>
+    <style name="MovieDetailSubtitle" parent="TextAppearance.AppCompat.Small">
+        <item name="android:textColor">@color/colorTextWhite</item>
+        <item name="android:paddingLeft">@dimen/text_padding_16dp</item>
+        <item name="android:paddingRight">@dimen/text_padding_16dp</item>
+        <item name="android:textSize">@dimen/subtitle_text_size</item>
+    </style>
+
+
+    <style name="MovieDetailContainer" parent="android:Widget">
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_marginTop">@dimen/detail_margin</item>
+        <item name="android:layout_marginLeft">@dimen/detail_margin_left</item>
+        <item name="android:layout_marginRight">@dimen/detail_margin_right</item>
+        <item name="android:paddingRight">16dp</item>
+        <item name="android:orientation">vertical</item>
+    </style>
+
+    <style name="MovieDetailContainerTitle" parent="TextAppearance.AppCompat.Headline">
+        <item name="android:textColor">@color/colorPrimaryText</item>
+        <item name="android:padding">@dimen/text_padding_8dp</item>
+    </style>
+
+    <style name="PlayTrailerImage">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_gravity">center</item>
+        <item name="android:src">@drawable/ic_play_circle</item>
+    </style>
+
+    <style name="MovieTrailerImage">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:scaleType">centerCrop</item>
+    </style>
+
+    <style name="ReviewAuthorName" parent="TextAppearance.AppCompat.Subhead">
+        <item name="android:layout_marginTop">@dimen/detail_margin</item>
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+    </style>
+
+    <style name="ReviewContentDescription">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:paddingBottom">@dimen/text_padding_16dp</item>
+        <item name="android:paddingTop">@dimen/text_padding_16dp</item>
     </style>
 
 </resources>

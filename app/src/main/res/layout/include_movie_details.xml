@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/movie_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingTop="250dp"
+    android:fitsSystemWindows="true">
+
+    <LinearLayout
+        android:id="@+id/movie_detail_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <RelativeLayout
+            android:id="@+id/movie_detail_title_container"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/title_container_height"
+            android:background="@color/colorPrimaryDark">
+
+            <TextView
+                android:id="@+id/original_title"
+                style="@style/MovieDetailTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true"
+                android:textIsSelectable="true"
+                android:text="Movie Title" />
+
+            <TextView
+                android:id="@+id/release_date"
+                style="@style/MovieDetailSubtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignBottom="@+id/original_title"
+                android:layout_gravity="center"
+                android:layout_toEndOf="@+id/original_title"
+                android:layout_toRightOf="@+id/original_title"
+                android:text="2015"></TextView>
+
+        </RelativeLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                style="@style/MovieDetailContainer"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:id="@+id/overview_level"
+                        style="@style/MovieDetailContainerTitle"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Overview"
+                        android:textSize="24sp"/>
+
+                    <ImageView
+                        android:id="@+id/ratingStar"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_star_rate_black_18dp" />
+
+                    <TextView
+                        android:id="@+id/rating"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:paddingRight="@dimen/rate_icon_margin_right"
+                        android:text="@string/rating_out_of_ten" />
+
+                </LinearLayout>
+
+                <include layout="@layout/horizontal_line" />
+
+                <TextView
+                    android:id="@+id/overview"
+                    style="@style/MovieOverViewContent"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Test" />
+
+            </LinearLayout>
+    </LinearLayout>
+
+</android.support.design.widget.CoordinatorLayout>

@@ -11,13 +11,10 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
+
+import p1.nd.khan.jubair.mohammadd.popularmovies.utils.Constants;
 
 public class Utility {
-
-    private static final SimpleDateFormat DATE_FORMAT_MDB = new SimpleDateFormat("yyyy-MM-dd");
-    private static final SimpleDateFormat DATE_FORMAT_MONTH_YEAR = new SimpleDateFormat("MMMM yyyy");
-    private static final String PREFS_NAME = "moviePref";
 
     //http://stackoverflow.com/questions/4238921/detect-whether-there-is-an-internet-connection-available-on-android
     public static boolean isNetworkAvailable(Context context) {
@@ -38,7 +35,7 @@ public class Utility {
         String result;
         if (releaseDate != null && !releaseDate.trim().isEmpty()) {
             try {
-                result = DATE_FORMAT_MONTH_YEAR.format(DATE_FORMAT_MDB.parse(releaseDate));
+                result = Constants.DATE_FORMAT_MONTH_YEAR.format(Constants.DATE_FORMAT_MDB.parse(releaseDate));
             } catch (ParseException e) {
                 result = "unknown_release_date";
             }
@@ -49,13 +46,13 @@ public class Utility {
     }
 
     public static String getPreferredSorting(Context context) {
-        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, 0);
-        return prefs.getString(context.getString(R.string.pref_sort_order_key), context.getString(R.string.SORT_ORDER_POPULARITY));
+        SharedPreferences prefs = context.getSharedPreferences(Constants.PREFS_NAME, 0);
+        return prefs.getString(Constants.SORTING_KEY, context.getString(R.string.SORT_ORDER_POPULARITY));
     }
 
     public static void updatePreferredSorting(Context context, String sortOrder) {
-        SharedPreferences settings = context.getSharedPreferences(PREFS_NAME, 0);
-        settings.edit().putString(context.getString(R.string.pref_sort_order_key), sortOrder).commit();
+        SharedPreferences settings = context.getSharedPreferences(Constants.PREFS_NAME, 0);
+        settings.edit().putString(Constants.SORTING_KEY, sortOrder).apply();
     }
 
 }

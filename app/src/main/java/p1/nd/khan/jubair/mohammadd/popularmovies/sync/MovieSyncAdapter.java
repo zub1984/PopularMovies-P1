@@ -31,6 +31,7 @@ import java.util.List;
 import p1.nd.khan.jubair.mohammadd.popularmovies.R;
 import p1.nd.khan.jubair.mohammadd.popularmovies.Utility;
 import p1.nd.khan.jubair.mohammadd.popularmovies.data.MovieContract.MovieEntry;
+import p1.nd.khan.jubair.mohammadd.popularmovies.utils.Constants;
 
 
 /**
@@ -66,7 +67,7 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
         else
         {
             String sortOrder = Utility.getPreferredSorting(getContext());
-            String bundleSortType = extras.getString(mContext.getString(R.string.pref_sort_order_key), mContext.getString(R.string.SORT_ORDER_POPULARITY));
+            String bundleSortType = extras.getString(Constants.SORTING_KEY, mContext.getString(R.string.SORT_ORDER_POPULARITY));
 
             if (!sortOrder.equals(bundleSortType)) {
                 getContext().getContentResolver().delete(MovieEntry.CONTENT_URI, null, null);
@@ -197,7 +198,7 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
         bundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
         bundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
         if (null!= sortType) {
-            bundle.putString(context.getString(R.string.pref_sort_order_key), sortType);
+            bundle.putString(Constants.SORTING_KEY, sortType);
         }
         ContentResolver.requestSync(getSyncAccount(context,sortType),
                 context.getString(R.string.content_authority), bundle);

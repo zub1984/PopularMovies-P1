@@ -20,6 +20,7 @@ import android.widget.ListView;
 import p1.nd.khan.jubair.mohammadd.popularmovies.adapter.MovieAdapter;
 import p1.nd.khan.jubair.mohammadd.popularmovies.listener.EndlessScrollListener;
 import p1.nd.khan.jubair.mohammadd.popularmovies.sync.MovieSyncAdapter;
+import p1.nd.khan.jubair.mohammadd.popularmovies.utils.Constants;
 
 import static p1.nd.khan.jubair.mohammadd.popularmovies.data.MovieContract.MovieEntry;
 
@@ -43,15 +44,12 @@ import static p1.nd.khan.jubair.mohammadd.popularmovies.data.MovieContract.Movie
 
 public class MainActivityFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>,AbsListView.OnItemClickListener{
 
-    private static final int CURSOR_LOADER_ID = 0;
+
     private final String LOG_TAG = MainActivityFragment.class.getSimpleName();
     OnMoviePosterSelectedListener mCallback;
     private MovieAdapter mMovieAdapter;
     private String mSortOrder;
     private String optionSelected;
-
-    public static final String DB_ORDER_POPULARITY = MovieEntry.C_VOTE_COUNT + " DESC," + MovieEntry._ID + " ASC";
-    public static final String DB_ORDER_RATING = MovieEntry.C_VOTE_AVERAGE + " DESC," + MovieEntry._ID + " ASC";
 
     private static final String[] MOVIE_LIST_COLUMNS = {
             MovieEntry._ID,
@@ -61,11 +59,9 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
     public static final int C_ID = 0;
     public static final int C_MOVIE_ID = 1;
     public static final int C_POSTER_PATH = 2;
-
     private int mPosition = GridView.INVALID_POSITION;
     private Parcelable mRestoreGridViewState;
-    private static final String SELECTED_KEY = "selected_position";
-    private static final String SELECTED_GRID_VIEW = "selected_grid_view";
+
 
     GridView mGridView;
 
@@ -110,8 +106,8 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
         // Always call the superclass so it can save the view hierarchy state
         super.onSaveInstanceState(outState);
         int position = mGridView.getFirstVisiblePosition();
-        outState.putInt(SELECTED_KEY, position);
-        outState.putParcelable(SELECTED_GRID_VIEW, mGridView.onSaveInstanceState());
+        outState.putInt(Constants.SELECTED_MOVIE_KEY, position);
+        outState.putParcelable(Constants.SELECTED_GRID_VIEW, mGridView.onSaveInstanceState());
     }
 
     @Override
@@ -147,8 +143,8 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
     // since we read the location when we create the loader, all we need to do is restart things
     private void onSortingOptionChanged(String optionSelected) {
             Bundle bundle = new Bundle();
-            bundle.putString(getString(R.string.pref_sort_order_key), optionSelected);
-            getLoaderManager().restartLoader(CURSOR_LOADER_ID, bundle, this);
+            bundle.putString(Constants.SORTING_KEY, optionSelected);
+            getLoaderManager().restartLoader(Constants.CURSOR_LOADER_ID, bundle, this);
 
         mSortOrder = optionSelected;
         if(!optionSelected.equalsIgnoreCase(getString(R.string.SORT_ORDER_FAVORITE)))
@@ -163,7 +159,7 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
 
         final View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
-        mMovieAdapter = new MovieAdapter(getActivity(), null, 0, CURSOR_LOADER_ID);
+        mMovieAdapter = new MovieAdapter(getActivity(), null, 0, Constants.CURSOR_LOADER_ID);
         mGridView = (GridView) rootView.findViewById(R.id.movie_list_gridview);
         mGridView.setAdapter(mMovieAdapter);
         mGridView.setOnItemClickListener(this);
@@ -177,9 +173,9 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
             }
         });
 
-        if (savedInstanceState != null && savedInstanceState.containsKey(SELECTED_KEY)) {
-            mPosition = savedInstanceState.getInt(SELECTED_KEY);
-            mRestoreGridViewState = savedInstanceState.getParcelable(SELECTED_GRID_VIEW);
+        if (savedInstanceState != null && savedInstanceState.containsKey(Constants.SELECTED_MOVIE_KEY)) {
+            mPosition = savedInstanceState.getInt(Constants.SELECTED_MOVIE_KEY);
+            mRestoreGridViewState = savedInstanceState.getParcelable(Constants.SELECTED_GRID_VIEW);
         }
 
         return rootView;
@@ -193,10 +189,10 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
     public void onActivityCreated(Bundle savedInstanceState) {
         Bundle bundle = new Bundle();
         if (mSortOrder != null) {
-            bundle.putString(getString(R.string.pref_sort_order_key), mSortOrder);
+            bundle.putString(Constants.SORTING_KEY, mSortOrder);
         }
 
-        getLoaderManager().initLoader(CURSOR_LOADER_ID, bundle, this);
+        getLoaderManager().initLoader(Constants.CURSOR_LOADER_ID, bundle, this);
         super.onActivityCreated(savedInstanceState);
     }
 
@@ -204,12 +200,12 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args){
 
-        String sortOrder = args.getString(getString(R.string.pref_sort_order_key), getString(R.string.SORT_ORDER_POPULARITY));
+        String sortOrder = args.getString(Constants.SORTING_KEY, getString(R.string.SORT_ORDER_POPULARITY));
         if (sortOrder.equals(getString(R.string.SORT_ORDER_FAVORITE)))
             return new CursorLoader(getActivity(), MovieEntry.FAVORITES_CONTENT_URI, MOVIE_LIST_COLUMNS, null, null, null);
         else
             return new CursorLoader(getActivity(), MovieEntry.CONTENT_URI, MOVIE_LIST_COLUMNS, null, null,
-                    sortOrder.equals(getString(R.string.SORT_ORDER_POPULARITY)) ? DB_ORDER_POPULARITY : DB_ORDER_RATING);
+                    sortOrder.equals(getString(R.string.SORT_ORDER_POPULARITY)) ? Constants.DB_ORDER_POPULARITY : Constants.DB_ORDER_RATING);
     }
 
     @Override
