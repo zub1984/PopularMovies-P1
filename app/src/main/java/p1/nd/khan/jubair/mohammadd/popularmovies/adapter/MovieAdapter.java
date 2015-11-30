@@ -13,8 +13,8 @@ import com.squareup.picasso.Picasso;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
-import p1.nd.khan.jubair.mohammadd.popularmovies.MainActivityFragment;
 import p1.nd.khan.jubair.mohammadd.popularmovies.R;
+import p1.nd.khan.jubair.mohammadd.popularmovies.data.MovieContract;
 
 /**
  * Created by laptop on 11/11/2015.
@@ -54,7 +54,7 @@ public class MovieAdapter extends CursorAdapter {
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
         ViewHolder viewHolder = (ViewHolder) view.getTag();
-        String posterPath = cursor.getString(MainActivityFragment.C_POSTER_PATH);
+        String posterPath = cursor.getString(cursor.getColumnIndex(MovieContract.MovieEntry.C_POSTER_PATH));
         if (posterPath != null) {
             Picasso.with(context).load(context.getString(R.string.POSTER_IMAGE_URL) + "/" + posterPath).into(viewHolder.posterImage);
         } else {

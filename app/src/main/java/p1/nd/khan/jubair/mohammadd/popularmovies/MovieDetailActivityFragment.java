@@ -5,7 +5,6 @@ import android.app.LoaderManager;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.CursorLoader;
-import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
 import android.net.Uri;
@@ -16,8 +15,6 @@ import android.support.design.widget.Snackbar;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -46,6 +43,7 @@ public class MovieDetailActivityFragment extends Fragment implements LoaderManag
     private MovieDetailsAdapter mMovieDetailsAdapter;
     private Parcelable mRestoreListViewState;
     private CursorLoader mMovieDetailLoader;
+    private String mPosterImage;
 
 
     @Nullable
@@ -70,20 +68,30 @@ public class MovieDetailActivityFragment extends Fragment implements LoaderManag
 
         Log.v(LOG_TAG, "[onCreate called]");
 
-        Intent intent = getActivity().getIntent();
-        if (null != intent) {
-            mMovieId = intent.getIntExtra(Constants.MOVIE_ID_KEY, -1);
-            mFavorite = intent.getStringExtra(Constants.SORTING_KEY).equals(getString(R.string.SORT_ORDER_FAVORITE));
+        if (null!= getArguments()) {
+            mMovieId=getArguments().getInt(Constants.MOVIE_ID_KEY);
+            String sortKey=getArguments().getString(Constants.SORTING_KEY);
+            mPosterImage = getArguments().getString(Constants.POSTER_IMAGE_KEY);
+            Log.d(LOG_TAG, "onCreate() called with,mPosterImage:"+mPosterImage+",mMovieId:"+mMovieId+",sortKey"+sortKey);
+
+            mFavorite = getString(R.string.SORT_ORDER_FAVORITE).equals(sortKey);
+
+            if(!mFavorite) mFavorite=isMovieFavorite(mMovieId);
+            if (!mFavorite) MovieSyncAdapter.syncMovieDetails(getActivity(), Integer.toString(mMovieId));
         }
-        if(!mFavorite) mFavorite=isMovieFavorite(mMovieId);
-        if (!mFavorite) MovieSyncAdapter.syncMovieDetails(getActivity(), Integer.toString(mMovieId));
+        else{
+            //TO do : load No movie view in two pane mode.
+            Log.d(LOG_TAG, "else part onCreate()");
+        }
+
+
     }
 
 
-    @Override
+   /* @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.details_menu, menu);
-    }
+    }*/
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -92,8 +100,7 @@ public class MovieDetailActivityFragment extends Fragment implements LoaderManag
                 getActivity().onBackPressed();
                 return true;
             case R.id.share_movie:
-                Snackbar.make(getView(), "details menu", Snackbar.LENGTH_SHORT).show();
-                //openShareIntent(mMainTrailer);
+                Snackbar.make(getView(), "To Do : share first trailer!", Snackbar.LENGTH_SHORT).show();
                 return true;
             default:
                 break;
@@ -132,15 +139,20 @@ public class MovieDetailActivityFragment extends Fragment implements LoaderManag
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
-        Bundle bundle = new Bundle();
-        bundle.putInt(Constants.MOVIE_ID_KEY, mMovieId);
-        getLoaderManager().initLoader(Constants.CURSOR_DETAIL_LOADER_ID, bundle, this);
+        Log.v(LOG_TAG, "[onActivityCreated called]");
+        if(-1!= mMovieId){
+            Log.v(LOG_TAG, "[load movie details !]");
+            Bundle bundle = new Bundle();
+            bundle.putInt(Constants.MOVIE_ID_KEY, mMovieId);
+            getLoaderManager().initLoader(Constants.CURSOR_DETAIL_LOADER_ID, bundle, this);
+        }
+
         super.onActivityCreated(savedInstanceState);
     }
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        if (id == Constants.CURSOR_DETAIL_LOADER_ID && args.containsKey(Constants.MOVIE_ID_KEY)) {
+        if (id == Constants.CURSOR_DETAIL_LOADER_ID && -1!= args.getInt(Constants.MOVIE_ID_KEY)) {
             Uri baseContentUri = mFavorite ? MovieContract.FAVORITES_BASE_CONTENT_URI : MovieContract.BASE_CONTENT_URI;
             Uri.Builder builder = baseContentUri.buildUpon()
                     .appendPath(MovieContract.MOVIES_PATH)

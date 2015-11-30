@@ -7,16 +7,18 @@ import android.content.Context;
 import android.content.SyncResult;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.util.JsonReader;
-import android.util.JsonToken;
 import android.util.Log;
 
+import com.squareup.okhttp.Callback;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +26,7 @@ import java.util.List;
 import p1.nd.khan.jubair.mohammadd.popularmovies.R;
 import p1.nd.khan.jubair.mohammadd.popularmovies.Utility;
 import p1.nd.khan.jubair.mohammadd.popularmovies.data.MovieContract.TrailersEntry;
+import p1.nd.khan.jubair.mohammadd.popularmovies.utils.Constants;
 
 /**
  * Created by laptop on 11/16/2015.
@@ -39,114 +42,72 @@ public class TrailerSyncAdapter {
 
     public void onPerformSync(Account account, Bundle extras, String authority, ContentProviderClient provider, SyncResult syncResult) {
         Log.d(LOG_TAG, "onPerformSync");
-        String movieId = extras.getString(MovieSyncAdapter.MOVIE_ID);
+        String movieId = extras.getString(Constants.DETAIL_SYNC_MOVIE_ID);
         if (movieId != null && !movieId.trim().isEmpty() && Utility.isNetworkAvailable(mContext)) {
-            getTrailerData(movieId);
+            getMovieTrailers(movieId);
         }
     }
 
-    private boolean getTrailerData(String movieId) {
-        Log.d(LOG_TAG, "getTrailerData movieId[" + movieId + "]");
 
-        boolean result = false;
+   private void getMovieTrailers(final String movieId ){
+        OkHttpClient client = new OkHttpClient();
+        String builtUri = Uri.parse(MessageFormat.format(mContext.getString(R.string.MOVIE_TRAILER_URL), movieId))
+                .buildUpon()
+                .appendQueryParameter("api_key", mContext.getString(R.string.PERSONAL_API_KEY))
+                .build().toString();
 
-        HttpURLConnection urlConnection = null;
-        JsonReader reader = null;
-        try {
-            Uri builtUri = Uri.parse(MessageFormat.format(mContext.getString(R.string.MOVIE_TRAILER_URL), movieId))
-                    .buildUpon()
-                    .appendQueryParameter("api_key", mContext.getString(R.string.PERSONAL_API_KEY))
-                    .build();
+        Log.v(LOG_TAG, "URL:" + builtUri);
 
-            URL url = new URL(builtUri.toString());
-            Log.d(LOG_TAG, "URL: " + url.toString());
-            urlConnection = (HttpURLConnection) url.openConnection();
-            urlConnection.setRequestMethod("GET");
-            urlConnection.connect();
-
-            InputStream inputStream = urlConnection.getInputStream();
-            reader = new JsonReader(new InputStreamReader(inputStream, "UTF-8"));
-
-            result = parseResultValues(movieId, reader);
-
-        } catch (Exception e) {
-            Log.e(LOG_TAG, "Error ", e);
-        } finally {
-            if (urlConnection != null) {
-                urlConnection.disconnect();
+        Request request = new Request.Builder()
+                .url(builtUri)
+                .build();
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Request request, IOException e) {
+                Log.e(LOG_TAG, "==onFailure[getMovieTrailers]:", e);
+                return;
             }
-            if (reader != null) {
+
+            @Override
+            public void onResponse(Response response) throws IOException {
                 try {
-                    reader.close();
-                } catch (final IOException e) {
-                    Log.e(LOG_TAG, "Error closing stream", e);
-                }
-            }
-        }
-        return result;
-    }
-
-    private boolean parseResultValues(String movieId, JsonReader reader) throws IOException {
-        int inserted = 0;
-        while (reader.hasNext()) {
-            List<ContentValues> trailerList = new ArrayList();
-
-            reader.beginObject();
-            while (reader.hasNext()) {
-                String name = reader.nextName();
-                if (name.equals("results") && reader.peek() != JsonToken.NULL) {
-                    reader.beginArray();
-                    while (reader.hasNext()) {
-                        trailerList.add(parseContentValues(movieId, reader));
+                    String jsonData = response.body().string();
+                    if (response.isSuccessful()) {
+                        insertTrailerContentValues(movieId, jsonData);
                     }
-                    reader.endArray();
-                } else {
-                    reader.skipValue();
+                } catch (IOException | JSONException e) {
+                    Log.e(LOG_TAG, "IOException | JSONException: Exception caught: ", e);
+                    return;
                 }
             }
-            inserted += insertDataIntoContentProvider(trailerList);
-        }
-        Log.d(LOG_TAG, "Found [" + inserted + "] trailers");
-        return inserted > 0;
+        });
     }
 
-    private int insertDataIntoContentProvider(List<ContentValues> moviesList) {
+
+    private void insertTrailerContentValues(String movieId, String reviewJsonStr)
+            throws JSONException {
         int result = 0;
-        if (moviesList.size() > 0) {
+        JSONObject mdbMovieJson = new JSONObject(reviewJsonStr);
+        JSONArray trailerArray = mdbMovieJson.getJSONArray(mContext.getString(R.string.MDB_REQ_RESULTS));
+        List<ContentValues> trailerList = new ArrayList<>();
+        for (int i = 0; i < trailerArray.length(); i++) {
+            JSONObject mAttributes = trailerArray.getJSONObject(i);
+            ContentValues mValues = new ContentValues();
+            mValues.put(TrailersEntry.C_MOVIE_ID, movieId);
+            mValues.put(TrailersEntry.C_TRAILER_ID, mAttributes.getString("id"));
+            mValues.put(TrailersEntry.C_ISO_639_1, mAttributes.getString("iso_639_1"));
+            mValues.put(TrailersEntry.C_KEY, mAttributes.getString("key"));
+            mValues.put(TrailersEntry.C_NAME, mAttributes.getString("name"));
+            mValues.put(TrailersEntry.C_SITE, mAttributes.getString("site"));
+            mValues.put(TrailersEntry.C_SIZE, mAttributes.getString("size"));
+            mValues.put(TrailersEntry.C_TYPE, mAttributes.getString("type"));
+            trailerList.add(mValues);
+        }
+        if (trailerList.size() > 0) {
             result = mContext.getContentResolver().bulkInsert(
                     TrailersEntry.CONTENT_URI,
-                    moviesList.toArray(new ContentValues[moviesList.size()]));
+                    trailerList.toArray(new ContentValues[trailerList.size()]));
         }
-        return result;
-    }
-
-    @NonNull
-    private ContentValues parseContentValues(String movieId, JsonReader reader) throws IOException {
-        reader.beginObject();
-
-        ContentValues trailerValues = new ContentValues();
-        trailerValues.put(TrailersEntry.C_MOVIE_ID, movieId);
-        while (reader.hasNext()) {
-            String name = reader.nextName();
-            if (name.equals("id")) {
-                trailerValues.put(TrailersEntry.C_TRAILER_ID, reader.nextString());
-            } else if (name.equals("iso_639_1")) {
-                trailerValues.put(TrailersEntry.C_ISO_639_1, reader.nextString());
-            } else if (name.equals("key")) {
-                trailerValues.put(TrailersEntry.C_KEY, reader.nextString());
-            } else if (name.equals("name")) {
-                trailerValues.put(TrailersEntry.C_NAME, reader.nextString());
-            } else if (name.equals("site")) {
-                trailerValues.put(TrailersEntry.C_SITE, reader.nextString());
-            } else if (name.equals("size")) {
-                trailerValues.put(TrailersEntry.C_SIZE, reader.nextInt());
-            } else if (name.equals("type")) {
-                trailerValues.put(TrailersEntry.C_TYPE, reader.nextString());
-            } else {
-                reader.skipValue();
-            }
-        }
-        reader.endObject();
-        return trailerValues;
+        Log.v(LOG_TAG, "===[Trailer Inserted] : " + result);
     }
 }

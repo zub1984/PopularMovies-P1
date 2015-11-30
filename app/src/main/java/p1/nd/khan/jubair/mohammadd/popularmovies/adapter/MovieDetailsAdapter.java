@@ -17,6 +17,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
@@ -54,13 +55,15 @@ public class MovieDetailsAdapter extends CursorAdapter {
     private static final int TRAILER = 1;
     private static final int REVIEW = 2;
     private boolean mFavorite;
-    private boolean isAdded2Favorites;
+    private String firstTrailerKey;
+    private int FIST_TRAILER = 0;
 
-/*    @Bind(R.id.movie_container)
-    CoordinatorLayout mMovieDetailsLayout;*/
 
     @Bind(R.id.favorite_fab)
     FloatingActionButton mFab;
+
+    @Bind(R.id.play_trailer)
+    ImageView mTrailerIcon;
 
     public MovieDetailsAdapter(Context context, Cursor cursor, int flags, boolean favorite) {
         super(context, cursor, flags);
@@ -101,9 +104,11 @@ public class MovieDetailsAdapter extends CursorAdapter {
         ImageView mBackdropPath;
         @Bind(R.id.poster)
         ImageView mPosterUrl;
+        @Bind(R.id.play_trailer)
+        ImageView mPlayTrailer;
+
         @Bind(R.id.ratingStar)
         ImageView mRatingStar;
-
         @Bind(R.id.original_title)
         TextView mTitle;
         @Bind(R.id.overview)
@@ -112,7 +117,6 @@ public class MovieDetailsAdapter extends CursorAdapter {
         TextView mReleaseDate;
         @Bind(R.id.rating)
         TextView mUserRating;
-
         @Bind(R.id.favorite_fab)
         FloatingActionButton mFavoriteFab;
 
@@ -123,6 +127,8 @@ public class MovieDetailsAdapter extends CursorAdapter {
 
     /* trailer holder class */
     public static class TrailerHolder {
+        @Bind(R.id.Trailer_Container)
+        RelativeLayout trailerContainer;
         @Bind(R.id.type)
         TextView mType;
         @Bind(R.id.name)
@@ -161,15 +167,13 @@ public class MovieDetailsAdapter extends CursorAdapter {
                 view = LayoutInflater.from(context).inflate(R.layout.fragment_movie_detail, parent, false);
                 MovieHolder movieHolder = new MovieHolder(view);
                 view.setTag(movieHolder);
-                mFab =movieHolder.mFavoriteFab;
+                mFab = movieHolder.mFavoriteFab;
+                mTrailerIcon = movieHolder.mPlayTrailer;
                 break;
             case TRAILER:
                 view = LayoutInflater.from(context).inflate(R.layout.list_row_trailer, parent, false);
-                if (null != view) {
-                    TrailerHolder trailerHolder = new TrailerHolder(view);
-                    view.setTag(trailerHolder);
-                }
-
+                TrailerHolder trailerHolder = new TrailerHolder(view);
+                view.setTag(trailerHolder);
                 break;
             case REVIEW:
                 view = LayoutInflater.from(context).inflate(R.layout.list_row_review, parent, false);
@@ -206,36 +210,71 @@ public class MovieDetailsAdapter extends CursorAdapter {
      */
     private void DrawMovieDetails(Context context, Cursor data, final MovieHolder movieHolder) {
         movieHolder.mBackdropPath.setScaleType(ImageView.ScaleType.FIT_XY);
+        if (MOVIE == getCursorType(data)) {
+            Picasso.with(context)
+                    .load(context.getString(R.string.BACK_DROP_IMAGE_URL) + data.getString(data.getColumnIndex(MovieEntry.C_BACKDROP_PATH)))
+                    .placeholder(R.drawable.placeholder)
+                    .error(R.drawable.placeholder)
+                    .into(movieHolder.mBackdropPath);
 
-        Picasso.with(context)
-                .load(context.getString(R.string.BACK_DROP_IMAGE_URL) + data.getString(data.getColumnIndex(MovieEntry.C_BACKDROP_PATH)))
-                .placeholder(R.drawable.placeholder)
-                .error(R.drawable.placeholder)
-                .into(movieHolder.mBackdropPath);
+            Picasso.with(context)
+                    .load(context.getString(R.string.POSTER_IMAGE_URL) + data.getString(data.getColumnIndex(MovieEntry.C_POSTER_PATH)))
+                    .placeholder(R.drawable.placeholder)
+                    .error(R.drawable.placeholder)
+                    .into(movieHolder.mPosterUrl);
 
-        Picasso.with(context)
-                .load(context.getString(R.string.POSTER_IMAGE_URL) + data.getString(data.getColumnIndex(MovieEntry.C_POSTER_PATH)))
-                .placeholder(R.drawable.placeholder)
-                .error(R.drawable.placeholder)
-                .into(movieHolder.mPosterUrl);
+            /**********show the Trailer Icon if movie has trailer *************/
+            playFirstTrailer(movieHolder);
+            /**********show the Trailer Icon if movie has trailer *************/
 
-        movieHolder.mRatingStar.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.ic_star_rate_black_18dp));
-        final String movieId = data.getString(data.getColumnIndex(MovieEntry.C_MOVIE_ID));
-        if (null != data.getString(data.getColumnIndex(MovieEntry.C_MOVIE_ID))) {
-            displayFabIcon();
-            movieHolder.mFavoriteFab.setTag(R.id.FAVORITES_KEY, movieId);
-            movieHolder.mFavoriteFab.setOnClickListener(new View.OnClickListener() {
+            movieHolder.mRatingStar.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.ic_star_rate_black_18dp));
+            final String movieId = data.getString(data.getColumnIndex(MovieEntry.C_MOVIE_ID));
+            if (null != data.getString(data.getColumnIndex(MovieEntry.C_MOVIE_ID))) {
+                displayFabIcon();
+                movieHolder.mFavoriteFab.setTag(R.id.FAVORITES_KEY, movieId);
+                movieHolder.mFavoriteFab.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        processFavorites(movieHolder.mFavoriteFab, movieId);
+                    }
+                });
+            }
+            movieHolder.mTitle.setText(data.getString(data.getColumnIndex(MovieEntry.C_ORIGINAL_TITLE)));
+            movieHolder.mOverview.setText(data.getString(data.getColumnIndex(MovieEntry.C_OVERVIEW)));
+            movieHolder.mUserRating.setText(formatRating(data.getString(data.getColumnIndex(MovieEntry.C_VOTE_AVERAGE))));
+            movieHolder.mReleaseDate.setText(Utility.formatReleaseDate(data.getString(data.getColumnIndex(MovieEntry.C_RELEASE_DATE))));
+        }
+    }
+
+    /**
+     * Helper Method to format ratings display.
+     *
+     * @param rating ,the rating of movie
+     */
+    private String formatRating(String rating) {
+        return rating + mContext.getString(R.string.rating_out_of_ten);
+    }
+
+    /**
+     * Method to play first trailer of the movie.
+     *
+     * @param movieHolder view holder of the movie.
+     */
+    private void playFirstTrailer(MovieHolder movieHolder) {
+        if (null == firstTrailerKey) {
+            movieHolder.mPlayTrailer.setVisibility(View.GONE);
+        } else {
+            movieHolder.mPlayTrailer.setVisibility(View.VISIBLE);
+            movieHolder.mPlayTrailer.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    processFavorites(movieHolder.mFavoriteFab,movieId);
+                    playYouTube(firstTrailerKey);
+                    Snackbar.make(v.getRootView(), "Play First Trailer!", Snackbar.LENGTH_SHORT).show();
                 }
             });
         }
-        movieHolder.mTitle.setText(data.getString(data.getColumnIndex(MovieEntry.C_ORIGINAL_TITLE)));
-        movieHolder.mOverview.setText(data.getString(data.getColumnIndex(MovieEntry.C_OVERVIEW)));
-        movieHolder.mUserRating.setText(data.getString(data.getColumnIndex(MovieEntry.C_VOTE_AVERAGE)) + context.getString(R.string.rating_out_of_ten));
-        movieHolder.mReleaseDate.setText(Utility.formatReleaseDate(data.getString(data.getColumnIndex(MovieEntry.C_RELEASE_DATE))));
     }
+
 
     /**
      * Method to draw trailer details.
@@ -245,27 +284,37 @@ public class MovieDetailsAdapter extends CursorAdapter {
      * @param trailerHolder attached with view
      */
     private void DrawTrailerDetails(Context context, final Cursor data, TrailerHolder trailerHolder) {
-        trailerHolder.mName.setText(data.getString(data.getColumnIndex(TrailersEntry.C_NAME)));
-        trailerHolder.mType.setText(data.getString(data.getColumnIndex(TrailersEntry.C_TYPE)));
-        trailerHolder.mSize.setText(data.getString(data.getColumnIndex(TrailersEntry.C_SITE)));
-        String tKey = data.getString(data.getColumnIndex(TrailersEntry.C_KEY));
-        if (null != tKey) {
-            String url = MessageFormat.format(context.getString(R.string.youtube_thumbnail_url), tKey);
-            Picasso.with(context).load(url).into(trailerHolder.mThumbnail);
-            trailerHolder.mThumbnail.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    playYouTube(data.getString(data.getColumnIndex(TrailersEntry.C_KEY)));
-                }
-            });
+        // DatabaseUtils.dumpCursor(data);
+        if (TRAILER == getCursorType(data)) {
+            final String tKey = data.getString(data.getColumnIndex(TrailersEntry.C_KEY));
+            final String tName = data.getString(data.getColumnIndex(TrailersEntry.C_NAME));
+            String type = data.getString(data.getColumnIndex(TrailersEntry.C_TYPE));
+            String site = data.getString(data.getColumnIndex(TrailersEntry.C_SITE));
+            trailerHolder.mName.setText(tName);
+            trailerHolder.mType.setText(type);
+            trailerHolder.mSize.setText(site);
+            // set first trailer, so that it can be play directly from play trailer icon over backdrop poster.
+            if (0 == FIST_TRAILER) {
+                this.firstTrailerKey = tKey;
+                FIST_TRAILER++;
+            }
+            if (null != tKey) {
+                String url = MessageFormat.format(context.getString(R.string.youtube_thumbnail_url), tKey);
+                Picasso.with(context).load(url).into(trailerHolder.mThumbnail);
+                trailerHolder.mThumbnail.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        playYouTube(tKey);
+                    }
+                });
 
-            trailerHolder.mShare.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    shareTrailer(data.getString(data.getColumnIndex(TrailersEntry.C_KEY)),
-                            data.getString(data.getColumnIndex(TrailersEntry.C_NAME)));
-                }
-            });
+                trailerHolder.mShare.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        shareTrailer(tKey, tName);
+                    }
+                });
+            }
         }
     }
 
@@ -276,17 +325,20 @@ public class MovieDetailsAdapter extends CursorAdapter {
      * @param reviewHolder attached with view
      */
     private void DrawReviewDetails(Cursor data, ReviewHolder reviewHolder) {
-        reviewHolder.mAuthor.setText(data.getString(data.getColumnIndex(ReviewsEntry.C_AUTHOR)));
-        reviewHolder.mContent.setText(data.getString(data.getColumnIndex(ReviewsEntry.C_CONTENT)));
-        reviewHolder.mContent.setTag(R.id.REVIEW_URL, data.getString(data.getColumnIndex(ReviewsEntry.C_URL)));
+        if (REVIEW == getCursorType(data)) {
+            reviewHolder.mAuthor.setText(data.getString(data.getColumnIndex(ReviewsEntry.C_AUTHOR)));
+            reviewHolder.mContent.setText(data.getString(data.getColumnIndex(ReviewsEntry.C_CONTENT)));
+            reviewHolder.mContent.setTag(R.id.REVIEW_URL, data.getString(data.getColumnIndex(ReviewsEntry.C_URL)));
+        }
     }
 
     /**
      * Method to process favorites icon click events.
      *
-     * @param view MovieHolder View.
+     * @param view    MovieHolder View.
+     * @param movieId to check for favorites.
      */
-    private void processFavorites(View view, String movieId ) {
+    private void processFavorites(View view, String movieId) {
         //Log.v(LOG_TAG,"movieId:"+movieId+",mFavorite:"+mFavorite);
         String resultMsg;
         if (mFavorite) {
@@ -302,7 +354,7 @@ public class MovieDetailsAdapter extends CursorAdapter {
     }
 
 
-    private void displayFabIcon(){
+    private void displayFabIcon() {
         mFab.setImageResource(mFavorite ? R.drawable.ic_favorite_filled : R.drawable.ic_favorite_blank);
     }
 
@@ -326,7 +378,7 @@ public class MovieDetailsAdapter extends CursorAdapter {
 
         try {
             cMovies = contentResolver.query(MovieEntry.CONTENT_URI, projection, selection, selectionArgs, null);
-            if (cMovies.moveToFirst()) {
+            if (null != cMovies && cMovies.moveToFirst()) {
                 ContentValues contentValues = new ContentValues();
                 DatabaseUtils.cursorRowToContentValues(cMovies, contentValues);
                 contentValues.remove("_id");
@@ -334,14 +386,14 @@ public class MovieDetailsAdapter extends CursorAdapter {
                 contentResolver.insert(MovieEntry.FAVORITES_CONTENT_URI, contentValues);
             }
             cTrailers = contentResolver.query(TrailersEntry.CONTENT_URI, projection, selection, selectionArgs, null);
-            while (cTrailers.moveToNext()) {
+            while (null != cTrailers && cTrailers.moveToNext()) {
                 ContentValues contentValues = new ContentValues();
                 DatabaseUtils.cursorRowToContentValues(cTrailers, contentValues);
                 contentValues.remove("_id");
                 contentResolver.insert(TrailersEntry.FAVORITES_CONTENT_URI, contentValues);
             }
             cReviews = contentResolver.query(ReviewsEntry.CONTENT_URI, projection, selection, selectionArgs, null);
-            while (cReviews.moveToNext()) {
+            while (null != cReviews && cReviews.moveToNext()) {
                 ContentValues contentValues = new ContentValues();
                 DatabaseUtils.cursorRowToContentValues(cReviews, contentValues);
                 contentValues.remove("_id");
@@ -377,15 +429,15 @@ public class MovieDetailsAdapter extends CursorAdapter {
 
         try {
             cMovies = contentResolver.query(MovieEntry.FAVORITES_CONTENT_URI, projection, selection, selectionArgs, null);
-            if (cMovies.moveToFirst()) {
+            if (null != cMovies && cMovies.moveToFirst()) {
                 result = contentResolver.delete(MovieEntry.FAVORITES_CONTENT_URI, selection, selectionArgs);
             }
             cTrailers = contentResolver.query(TrailersEntry.FAVORITES_CONTENT_URI, projection, selection, selectionArgs, null);
-            while (cTrailers.moveToNext()) {
+            while (null != cTrailers && cTrailers.moveToNext()) {
                 result = contentResolver.delete(TrailersEntry.FAVORITES_CONTENT_URI, selection, selectionArgs);
             }
             cReviews = contentResolver.query(ReviewsEntry.FAVORITES_CONTENT_URI, projection, selection, selectionArgs, null);
-            while (cReviews.moveToNext()) {
+            while (null != cReviews && cReviews.moveToNext()) {
                 result = contentResolver.delete(ReviewsEntry.FAVORITES_CONTENT_URI, selection, selectionArgs);
             }
         } finally {

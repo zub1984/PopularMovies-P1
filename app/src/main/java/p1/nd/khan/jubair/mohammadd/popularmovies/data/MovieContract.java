@@ -19,7 +19,7 @@ public class MovieContract {
     public static final String PATH_MOVIE_DETAILS = "details";
     public static final String PATH_TRAILERS = "trailers";
     public static final String PATH_REVIEWS = "reviews";
-    public static final String MOVIE_DETAIL_TABLE = "table_type";
+    public static final String MOVIE_DETAIL_TABLE = "ALIAS_DETAIL_TABLE";
 
     public static final String FAVORITES_CONTENT_AUTHORITY = "p1.nd.khan.jubair.mohammadd.popularmovies.app.favorites";
     public static final Uri FAVORITES_BASE_CONTENT_URI = Uri.parse("content://" + FAVORITES_CONTENT_AUTHORITY);

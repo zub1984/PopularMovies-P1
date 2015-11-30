@@ -75,17 +75,14 @@ public class MovieProvider extends ContentProvider {
         final int match = mUriMatcher.match(uri);
         Cursor retCursor;
         switch (match) {
-
             case MOVIES_ITEM:
                 retCursor = db.query(MovieEntry.TABLE_NAME,
                         projection, selection, selectionArgs, null, null, sortOrder);
                 break;
-
             case MOVIE:
                 retCursor = db.query(MovieEntry.TABLE_NAME,
                         projection, selection, selectionArgs, null, null, sortOrder);
                 break;
-
             case MOVIE_DETAILS:
                 long movieId = ContentUris.parseId(uri);
                 String where = MovieEntry.C_MOVIE_ID + "=?";
@@ -110,7 +107,6 @@ public class MovieProvider extends ContentProvider {
 
                 retCursor = new MergeCursor(cursors);
                 break;
-
             case TRAILERS:
                 retCursor = db.query(TrailersEntry.TABLE_NAME,
                         projection, selection, selectionArgs, null, null, sortOrder);
@@ -143,7 +139,7 @@ public class MovieProvider extends ContentProvider {
                 } else {
                     //throw new android.database.SQLException("Failed to insert row into " + uri);
                     Log.e(LOG_TAG, "Movie insert failed :" + uri);
-                    returnUri=null;
+                    returnUri = null;
                 }
                 break;
             case TRAILERS:
@@ -153,7 +149,7 @@ public class MovieProvider extends ContentProvider {
                 } else {
                     //throw new android.database.SQLException("Failed to insert row into " + uri);
                     Log.e(LOG_TAG, "Trailer insert failed :" + uri);
-                    returnUri=null;
+                    returnUri = null;
                 }
                 break;
             case REVIEWS:
@@ -163,13 +159,13 @@ public class MovieProvider extends ContentProvider {
                 } else {
                     //throw new android.database.SQLException("Failed to insert row into " + uri);
                     Log.e(LOG_TAG, "Review insert failed :" + uri);
-                    returnUri=null;
+                    returnUri = null;
                 }
                 break;
             default:
                 //throw new UnsupportedOperationException("Unknown uri: " + uri);
                 Log.e(LOG_TAG, "Unknown uri :" + uri);
-                returnUri=null;
+                returnUri = null;
         }
         getContext().getContentResolver().notifyChange(uri, null);
         return returnUri;
@@ -195,7 +191,7 @@ public class MovieProvider extends ContentProvider {
             default:
                 //throw new UnsupportedOperationException("Unknown uri: " + uri);
                 Log.e(LOG_TAG, "Unknown uri :" + uri);
-                rowsDeleted=0;
+                rowsDeleted = 0;
         }
         // Because a null deletes all rows
         if (rowsDeleted != 0) {
@@ -222,8 +218,8 @@ public class MovieProvider extends ContentProvider {
                 break;
             default:
                 //throw new UnsupportedOperationException("Unknown uri: " + uri);
-                Log.e(LOG_TAG,"Unknown uri :"+uri);
-                rowsUpdated=0;
+                Log.e(LOG_TAG, "Unknown uri :" + uri);
+                rowsUpdated = 0;
         }
         if (rowsUpdated != 0) {
             getContext().getContentResolver().notifyChange(uri, null);
@@ -291,10 +287,6 @@ public class MovieProvider extends ContentProvider {
         getContext().getContentResolver().notifyChange(uri, null);
         return result;
     }
-
-
-
-
 
 
     @Override

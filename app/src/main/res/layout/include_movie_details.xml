@@ -58,7 +58,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="Overview"
-                        android:textSize="24sp"/>
+                        android:textSize="@dimen/title_text_size"/>
 
                     <ImageView
                         android:id="@+id/ratingStar"

@@ -41,12 +41,6 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
     public final String LOG_TAG = MovieSyncAdapter.class.getSimpleName();
     private Context mContext;
 
-    // Interval at which to sync with the weather, in seconds.
-    // 60 seconds (1 minute) * 180 = 3 hours
-    public static final int SYNC_INTERVAL = 60 * 180;
-    public static final int SYNC_FLEXTIME = SYNC_INTERVAL/3;
-    public static final String MOVIE_ID = "movieid";
-
     private final TrailerSyncAdapter trailerSyncAdapter;
     private final ReviewSyncAdapter reviewSyncAdapter;
 
@@ -60,29 +54,26 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
     @Override
     public void onPerformSync(Account account, Bundle extras, String authority, ContentProviderClient provider, SyncResult syncResult) {
         Log.d(LOG_TAG, "onPerformSync Called.");
-        if (extras.containsKey(MOVIE_ID)) {
+        if (extras.containsKey(Constants.DETAIL_SYNC_MOVIE_ID)) {
             trailerSyncAdapter.onPerformSync(account, extras, authority, provider, syncResult);
             reviewSyncAdapter.onPerformSync(account, extras, authority, provider, syncResult);
         }
         else
         {
-            String sortOrder = Utility.getPreferredSorting(getContext());
-            String bundleSortType = extras.getString(Constants.SORTING_KEY, mContext.getString(R.string.SORT_ORDER_POPULARITY));
-
-            if (!sortOrder.equals(bundleSortType)) {
-                getContext().getContentResolver().delete(MovieEntry.CONTENT_URI, null, null);
-            }
-
             if (Utility.isNetworkAvailable(getContext())) {
+                String bundleSortType = extras.getString(Constants.SORTING_KEY, mContext.getString(R.string.SORT_ORDER_POPULARITY));
+                if (!Utility.getPreferredSorting(getContext()).equals(bundleSortType)) {
+                    getContext().getContentResolver().delete(MovieEntry.CONTENT_URI, null, null);
+                }
                 int page = extras.getInt("page", 1);
-                Log.v(LOG_TAG, "page:" + page);
+                Log.v(LOG_TAG, "page:" + page+",bundleSortType:"+bundleSortType);
                 fetchMdbMovie(bundleSortType, page);
             } else
                 Toast.makeText(getContext(), "No Internet Connection.", Toast.LENGTH_SHORT).show();
         }
     }
 
-    void fetchMdbMovie(String pSortOrder,int pPageNo ){
+    private void fetchMdbMovie(String pSortOrder,int pPageNo ){
         OkHttpClient client = new OkHttpClient();
         String movieURL=UrlFormatter(pSortOrder, pPageNo);
         Log.v(LOG_TAG, "URL:" + movieURL);
@@ -92,7 +83,8 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Request request, IOException e) {
-                Log.e(LOG_TAG, "==onFailure:", e);
+                Log.e(LOG_TAG, "==onFailure[fetchMdbMovie]:", e);
+                return;
             }
             @Override
             public void onResponse(Response response) throws IOException {
@@ -103,6 +95,7 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
                     }
                 } catch (IOException | JSONException e) {
                     Log.e(LOG_TAG, "IOException | JSONException: Exception caught: ", e);
+                    return;
                 }
             }
         });
@@ -136,13 +129,9 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
     private void insertMovieContentValues(String mdbJsonStr)
             throws JSONException {
         int result = 0;
-
         JSONObject mdbMovieJson = new JSONObject(mdbJsonStr);
         JSONArray moviesArray = mdbMovieJson.getJSONArray(mContext.getString(R.string.MDB_REQ_RESULTS));
-
         List<ContentValues> moviesList = new ArrayList<>();
-
-        Log.v(LOG_TAG, "===[number of movies records]: " + moviesArray.length());
 
         for (int i = 0; i < moviesArray.length(); i++) {
             // Get the JSON object representing the movie
@@ -165,7 +154,7 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
                     MovieEntry.CONTENT_URI,
                     moviesList.toArray(new ContentValues[moviesList.size()]));
         }
-        Log.v(LOG_TAG, "===insertMovieContents: " + result);
+        Log.v(LOG_TAG, "===[Movie Inserted]: " + result);
     }
 
 
@@ -214,7 +203,7 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
         bundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
         bundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
         if (null!= movieId) {
-            bundle.putString(MOVIE_ID, movieId);
+            bundle.putString(Constants.DETAIL_SYNC_MOVIE_ID, movieId);
         }
         ContentResolver.requestSync(getSyncAccount(context, movieId),
                 context.getString(R.string.content_authority), bundle);
@@ -251,7 +240,7 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
      * @param sortType sorting order
      */
     private static void onAccountCreated(Account newAccount, Context context,String sortType) {
-        MovieSyncAdapter.configurePeriodicSync(context, SYNC_INTERVAL, SYNC_FLEXTIME);
+        MovieSyncAdapter.configurePeriodicSync(context, Constants.SYNC_INTERVAL, Constants.SYNC_FLEXTIME);
         ContentResolver.setSyncAutomatically(newAccount, context.getString(R.string.content_authority), true);
         syncImmediately(context,sortType);
     }
@@ -267,6 +256,7 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
      * @param offset page number to request/load the data.
      */
     public static void loadMoreData(Context context,int offset){
+        //Log.v("LOG_TAG","loadMoreData:"+offset);
         Bundle bundle = new Bundle();
         bundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
         bundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);

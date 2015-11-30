@@ -1,11 +1,15 @@
 package p1.nd.khan.jubair.mohammadd.popularmovies;
 
+import android.app.ActivityOptions;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 
 import butterknife.ButterKnife;
 import p1.nd.khan.jubair.mohammadd.popularmovies.sync.MovieSyncAdapter;
@@ -41,9 +45,11 @@ public class MainActivity extends BaseActivity implements MainActivityFragment.O
             getSupportActionBar().setElevation(0f);
         }
 
-        MovieSyncAdapter.initializeSyncAdapter(this);
+        if (Utility.isNetworkAvailable(this)) {
+            Log.v("LOG_TAG"," call initializeSyncAdapter!");
+            MovieSyncAdapter.initializeSyncAdapter(this);
+        }
     }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -69,21 +75,34 @@ public class MainActivity extends BaseActivity implements MainActivityFragment.O
 
     // The user selected the movie poster from the MainActivityFragment
     // Send movie details to MovieDetailActivityFragment for display.
-    public void onMoviePosterSelected(int movieId, String mSortOrder) {
-
+    public void onMoviePosterSelected(int movieId, String posterImage, View view, int position, String mSortOrder) {
+        Log.v("LOG_TAG", "onMoviePosterSelected,posterImage:"+posterImage+",position:"+position+",movieId:"+movieId);
         Bundle bundle = new Bundle();
         bundle.putInt(Constants.MOVIE_ID_KEY, movieId);
         bundle.putString(Constants.SORTING_KEY, mSortOrder);
+        bundle.putString(Constants.POSTER_IMAGE_KEY, posterImage);
         if (mTwoPane) {
             FragmentManager fragmentManager = getFragmentManager();
             FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-            MovieDetailActivityFragment fragment =MovieDetailActivityFragment.newInstance(bundle);
+            MovieDetailActivityFragment fragment = MovieDetailActivityFragment.newInstance(bundle);
+           /* if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                fragment.setSharedElementReturnTransition(TransitionInflater.from(this).inflateTransition(R.transition.image_move));
+                fragment.setExitTransition(TransitionInflater.from(this).inflateTransition(android.R.transition.no_transition));
+                fragmentTransaction.addSharedElement(view, Constants.POSTER_IMAGE_VIEW_KEY);
+            }*/
             fragmentTransaction.replace(R.id.fragment_movie_detail, fragment, Constants.MOVIE_DETAIL_ACTIVITY_FRAGMENT_TAG).commit();
         } else {
+            ActivityOptions activityOptions = null;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+                activityOptions = ActivityOptions.makeSceneTransitionAnimation(this, view, Constants.POSTER_IMAGE_VIEW_KEY);
             Intent detailIntent = new Intent(this, MovieDetailActivity.class);
             detailIntent.putExtras(bundle);
-            startActivity(detailIntent);
+            if (null != activityOptions)
+                startActivity(detailIntent, activityOptions.toBundle());
+            else
+                startActivity(detailIntent);
         }
 
     }
+
 }

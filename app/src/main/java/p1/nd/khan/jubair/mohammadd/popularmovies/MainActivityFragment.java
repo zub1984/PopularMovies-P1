@@ -8,6 +8,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -15,8 +16,8 @@ import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.GridView;
-import android.widget.ListView;
 
+import butterknife.ButterKnife;
 import p1.nd.khan.jubair.mohammadd.popularmovies.adapter.MovieAdapter;
 import p1.nd.khan.jubair.mohammadd.popularmovies.listener.EndlessScrollListener;
 import p1.nd.khan.jubair.mohammadd.popularmovies.sync.MovieSyncAdapter;
@@ -42,8 +43,7 @@ import static p1.nd.khan.jubair.mohammadd.popularmovies.data.MovieContract.Movie
         See the License for the specific language governing permissions and
         limitations under the License.*/
 
-public class MainActivityFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>,AbsListView.OnItemClickListener{
-
+public class MainActivityFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>, AbsListView.OnItemClickListener {
 
     private final String LOG_TAG = MainActivityFragment.class.getSimpleName();
     OnMoviePosterSelectedListener mCallback;
@@ -62,9 +62,7 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
     private int mPosition = GridView.INVALID_POSITION;
     private Parcelable mRestoreGridViewState;
 
-
     GridView mGridView;
-
 
     public MainActivityFragment() {
     }
@@ -114,10 +112,15 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         if (null != mCallback) {
             Cursor cursor = (Cursor) parent.getItemAtPosition(position);
-            if (cursor != null) {
-                mCallback.onMoviePosterSelected(cursor.getInt(MainActivityFragment.C_MOVIE_ID),mSortOrder);
+            if (null != cursor) {
+                mCallback.onMoviePosterSelected(
+                        cursor.getInt(MainActivityFragment.C_MOVIE_ID),
+                        cursor.getString(MainActivityFragment.C_POSTER_PATH),
+                        getView(),
+                        position,
+                        mSortOrder);
             }
-            mPosition =position;
+            mPosition = position;
         }
     }
 
@@ -142,28 +145,32 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
 
     // since we read the location when we create the loader, all we need to do is restart things
     private void onSortingOptionChanged(String optionSelected) {
-            Bundle bundle = new Bundle();
-            bundle.putString(Constants.SORTING_KEY, optionSelected);
-            getLoaderManager().restartLoader(Constants.CURSOR_LOADER_ID, bundle, this);
+        Bundle bundle = new Bundle();
+        bundle.putString(Constants.SORTING_KEY, optionSelected);
+        getLoaderManager().restartLoader(Constants.CURSOR_LOADER_ID, bundle, this);
 
         mSortOrder = optionSelected;
-        if(!optionSelected.equalsIgnoreCase(getString(R.string.SORT_ORDER_FAVORITE)))
+        if (!optionSelected.equalsIgnoreCase(getString(R.string.SORT_ORDER_FAVORITE))){
+            Log.v(LOG_TAG,"option changed, reload movie,mSortOrder:"+mSortOrder);
             MovieSyncAdapter.syncImmediately(getActivity(), mSortOrder);
+        }
 
         mMovieAdapter.notifyDataSetChanged();
+
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
+        Log.v(LOG_TAG,"onCreateView start- from MainActivityFragment!");
         final View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+        ButterKnife.bind(this, rootView);
 
         mMovieAdapter = new MovieAdapter(getActivity(), null, 0, Constants.CURSOR_LOADER_ID);
         mGridView = (GridView) rootView.findViewById(R.id.movie_list_gridview);
         mGridView.setAdapter(mMovieAdapter);
         mGridView.setOnItemClickListener(this);
-
 
         mGridView.setOnScrollListener(new EndlessScrollListener() {
             @Override
@@ -178,11 +185,9 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
             mRestoreGridViewState = savedInstanceState.getParcelable(Constants.SELECTED_GRID_VIEW);
         }
 
-        return rootView;
-    }
+        Log.v(LOG_TAG,"onCreateView end- from MainActivityFragment!");
 
-    public void setActivateOnItemClick(boolean activateOnItemClick) {
-        mGridView.setChoiceMode(activateOnItemClick ? ListView.CHOICE_MODE_SINGLE : ListView.CHOICE_MODE_NONE);
+        return rootView;
     }
 
     @Override
@@ -196,9 +201,9 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
         super.onActivityCreated(savedInstanceState);
     }
 
-    // Attach loader to our flavors database query run when loader is initialized
+    // Attach loader to our database query run when loader is initialized
     @Override
-    public Loader<Cursor> onCreateLoader(int id, Bundle args){
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
 
         String sortOrder = args.getString(Constants.SORTING_KEY, getString(R.string.SORT_ORDER_POPULARITY));
         if (sortOrder.equals(getString(R.string.SORT_ORDER_FAVORITE)))
@@ -210,12 +215,13 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
 
     @Override
     public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
-        mMovieAdapter.swapCursor(cursor);
-        if (mPosition != GridView.INVALID_POSITION && mRestoreGridViewState != null && mGridView.getCount() >= mPosition) {
-            mGridView.onRestoreInstanceState(mRestoreGridViewState);
-            mPosition = GridView.INVALID_POSITION;
-            mRestoreGridViewState = null;
-        }
+
+            mMovieAdapter.swapCursor(cursor);
+            if (mPosition != GridView.INVALID_POSITION && mRestoreGridViewState != null && mGridView.getCount() >= mPosition) {
+                mGridView.onRestoreInstanceState(mRestoreGridViewState);
+                mPosition = GridView.INVALID_POSITION;
+                mRestoreGridViewState = null;
+            }
     }
 
     @Override
@@ -227,6 +233,13 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
        http://developer.android.com/training/basics/fragments/communicating.html
        Communicating with Other Fragments*/
     public interface OnMoviePosterSelectedListener {
-        void onMoviePosterSelected(int movieId, String mSortOrder);
+        void onMoviePosterSelected(int movieId, String posterImage, View view, int position, String mSortOrder);
+    }
+
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        ButterKnife.unbind(this);
     }
 }
