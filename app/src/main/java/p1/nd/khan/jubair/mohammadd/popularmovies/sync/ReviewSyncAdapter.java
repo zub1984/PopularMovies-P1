@@ -24,9 +24,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import p1.nd.khan.jubair.mohammadd.popularmovies.R;
-import p1.nd.khan.jubair.mohammadd.popularmovies.Utility;
 import p1.nd.khan.jubair.mohammadd.popularmovies.data.MovieContract.ReviewsEntry;
 import p1.nd.khan.jubair.mohammadd.popularmovies.utils.Constants;
+import p1.nd.khan.jubair.mohammadd.popularmovies.utils.Utility;
 
 /**
  * Created by laptop on 11/16/2015.
@@ -85,7 +85,7 @@ public class ReviewSyncAdapter {
             throws JSONException {
         int result = 0;
         JSONObject mdbMovieJson = new JSONObject(reviewJsonStr);
-        JSONArray reviewArray = mdbMovieJson.getJSONArray(mContext.getString(R.string.MDB_REQ_RESULTS));
+        JSONArray reviewArray = mdbMovieJson.getJSONArray(Constants.MDB_REQ_RESULTS);
         List<ContentValues> reviewList = new ArrayList<>();
         for (int i = 0; i < reviewArray.length(); i++) {
             JSONObject mAttributes = reviewArray.getJSONObject(i);

@@ -27,11 +27,11 @@ import java.text.MessageFormat;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import p1.nd.khan.jubair.mohammadd.popularmovies.R;
-import p1.nd.khan.jubair.mohammadd.popularmovies.Utility;
 import p1.nd.khan.jubair.mohammadd.popularmovies.data.MovieContract;
 import p1.nd.khan.jubair.mohammadd.popularmovies.data.MovieContract.MovieEntry;
 import p1.nd.khan.jubair.mohammadd.popularmovies.data.MovieContract.ReviewsEntry;
 import p1.nd.khan.jubair.mohammadd.popularmovies.data.MovieContract.TrailersEntry;
+import p1.nd.khan.jubair.mohammadd.popularmovies.utils.Utility;
 
 /*Copyright 2013 Jake Wharton
 
@@ -231,7 +231,7 @@ public class MovieDetailsAdapter extends CursorAdapter {
             final String movieId = data.getString(data.getColumnIndex(MovieEntry.C_MOVIE_ID));
             if (null != data.getString(data.getColumnIndex(MovieEntry.C_MOVIE_ID))) {
                 displayFabIcon();
-                movieHolder.mFavoriteFab.setTag(R.id.FAVORITES_KEY, movieId);
+               // movieHolder.mFavoriteFab.setTag(R.id.FAVORITES_KEY, movieId);
                 movieHolder.mFavoriteFab.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
@@ -241,19 +241,11 @@ public class MovieDetailsAdapter extends CursorAdapter {
             }
             movieHolder.mTitle.setText(data.getString(data.getColumnIndex(MovieEntry.C_ORIGINAL_TITLE)));
             movieHolder.mOverview.setText(data.getString(data.getColumnIndex(MovieEntry.C_OVERVIEW)));
-            movieHolder.mUserRating.setText(formatRating(data.getString(data.getColumnIndex(MovieEntry.C_VOTE_AVERAGE))));
+            movieHolder.mUserRating.setText(Utility.formatRating(context,data.getString(data.getColumnIndex(MovieEntry.C_VOTE_AVERAGE))));
             movieHolder.mReleaseDate.setText(Utility.formatReleaseDate(data.getString(data.getColumnIndex(MovieEntry.C_RELEASE_DATE))));
         }
     }
 
-    /**
-     * Helper Method to format ratings display.
-     *
-     * @param rating ,the rating of movie
-     */
-    private String formatRating(String rating) {
-        return rating + mContext.getString(R.string.rating_out_of_ten);
-    }
 
     /**
      * Method to play first trailer of the movie.
@@ -328,7 +320,7 @@ public class MovieDetailsAdapter extends CursorAdapter {
         if (REVIEW == getCursorType(data)) {
             reviewHolder.mAuthor.setText(data.getString(data.getColumnIndex(ReviewsEntry.C_AUTHOR)));
             reviewHolder.mContent.setText(data.getString(data.getColumnIndex(ReviewsEntry.C_CONTENT)));
-            reviewHolder.mContent.setTag(R.id.REVIEW_URL, data.getString(data.getColumnIndex(ReviewsEntry.C_URL)));
+            //reviewHolder.mContent.setTag(R.id.REVIEW_URL, data.getString(data.getColumnIndex(ReviewsEntry.C_URL)));
         }
     }
 

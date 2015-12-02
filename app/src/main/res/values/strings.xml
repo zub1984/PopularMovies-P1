@@ -14,21 +14,9 @@
 
     <!-- menu option for movei details -->
     <string name="share">Share</string>
-
-
     <string name="action_settings">Settings</string>
     <string name="title_activity_movie_detail">Movie Details</string>
 
-    <!-- themoviedb.org : Parameter details requires for PopularMovies App -->
-    <string name="MDB_REQ_RESULTS">results</string>
-    <string name="MDB_BACKDROP_PATH">backdrop_path</string>
-    <string name="MDB_MOVIE_ID">id</string>
-    <string name="MDB_ORIGINAL_TITLE">original_title</string>
-    <string name="MDB_OVERVIEW">overview</string>
-    <string name="MDB_POSTER_IMAGE">poster_path</string>
-    <string name="MDB_RELEASE_DATE">release_date</string>
-    <string name="MDB_VOTE_AVERAGE">vote_average</string>
-    <string name="MDB_VOTE_COUNT">vote_count</string>
 
     <string name="PERSONAL_API_KEY">[PERSONAL_API_KEY]</string>
 
@@ -59,7 +47,6 @@
     <string name="release_date">Release Date,</string>
     <string name="rating_out_of_ten">/10</string>
     <string name="rating_image">Rating Image</string>
-
 
     <!-- SyncAdapter related -->
     <string name="sync_account_type">md.jubair.khan.nd.com</string>

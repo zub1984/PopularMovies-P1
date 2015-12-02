@@ -14,6 +14,7 @@ import android.view.View;
 import butterknife.ButterKnife;
 import p1.nd.khan.jubair.mohammadd.popularmovies.sync.MovieSyncAdapter;
 import p1.nd.khan.jubair.mohammadd.popularmovies.utils.Constants;
+import p1.nd.khan.jubair.mohammadd.popularmovies.utils.Utility;
 
 public class MainActivity extends BaseActivity implements MainActivityFragment.OnMoviePosterSelectedListener {
 
@@ -76,7 +77,7 @@ public class MainActivity extends BaseActivity implements MainActivityFragment.O
     // The user selected the movie poster from the MainActivityFragment
     // Send movie details to MovieDetailActivityFragment for display.
     public void onMoviePosterSelected(int movieId, String posterImage, View view, int position, String mSortOrder) {
-        Log.v("LOG_TAG", "onMoviePosterSelected,posterImage:"+posterImage+",position:"+position+",movieId:"+movieId);
+        Log.v("LOG_TAG", "onMoviePosterSelected,posterImage:"+posterImage+",position:"+position+",movieId:"+movieId+",mTwoPane:"+mTwoPane);
         Bundle bundle = new Bundle();
         bundle.putInt(Constants.MOVIE_ID_KEY, movieId);
         bundle.putString(Constants.SORTING_KEY, mSortOrder);

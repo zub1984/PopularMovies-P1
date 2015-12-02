@@ -2,7 +2,7 @@ package p1.nd.khan.jubair.mohammadd.popularmovies.utils;
 
 import java.text.SimpleDateFormat;
 
-import p1.nd.khan.jubair.mohammadd.popularmovies.data.MovieContract;
+import p1.nd.khan.jubair.mohammadd.popularmovies.data.MovieContract.MovieEntry;
 
 /**
  * Created by laptop on 11/27/2015.
@@ -14,8 +14,21 @@ public class Constants {
     public static final String SELECTED_GRID_VIEW = "selected_grid_view";
 
     public static final int CURSOR_LOADER_ID = 0;
-    public static final String DB_ORDER_POPULARITY = MovieContract.MovieEntry.C_VOTE_COUNT + " DESC," + MovieContract.MovieEntry._ID + " ASC";
-    public static final String DB_ORDER_RATING = MovieContract.MovieEntry.C_VOTE_AVERAGE + " DESC," + MovieContract.MovieEntry._ID + " ASC";
+    public static final String DB_ORDER_POPULARITY = MovieEntry.C_VOTE_COUNT + " DESC," + MovieEntry._ID + " ASC";
+    public static final String DB_ORDER_RATING = MovieEntry.C_VOTE_AVERAGE + " DESC," + MovieEntry._ID + " ASC";
+
+
+    /*-- themoviedb.org : Parameter details requires for PopularMovies App --*/
+    public static final String MDB_REQ_RESULTS = "results";
+    public static final String MDB_BACKDROP_PATH = "backdrop_path";
+    public static final String MDB_MOVIE_ID = "id";
+    public static final String MDB_ORIGINAL_TITLE = "original_title";
+    public static final String MDB_OVERVIEW = "overview";
+    public static final String MDB_POSTER_IMAGE = "poster_path";
+    public static final String MDB_RELEASE_DATE = "release_date";
+    public static final String MDB_VOTE_AVERAGE = "vote_average";
+    public static final String MDB_VOTE_COUNT = "vote_count";
+
 
     public static final String LIST_VIEW_STATE = "list_view_state";
     public static final String FAVORITES = "favorites";
@@ -41,9 +54,5 @@ public class Constants {
 
     public static final String NO_MOVIES = "No Movies!";
     public static final String ON_MOVIES_LOAD_SUCCESS = "Movies Loaded Successfully!";
-
-
-
-
 
 }

@@ -11,11 +11,9 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.annotation.Nullable;
-import android.support.design.widget.Snackbar;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
@@ -45,7 +43,6 @@ public class MovieDetailActivityFragment extends Fragment implements LoaderManag
     private CursorLoader mMovieDetailLoader;
     private String mPosterImage;
 
-
     @Nullable
     @Bind(R.id.toolbar)
     Toolbar mToolbar;
@@ -66,34 +63,30 @@ public class MovieDetailActivityFragment extends Fragment implements LoaderManag
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
 
-        Log.v(LOG_TAG, "[onCreate called]");
-
-        if (null!= getArguments()) {
-            mMovieId=getArguments().getInt(Constants.MOVIE_ID_KEY);
-            String sortKey=getArguments().getString(Constants.SORTING_KEY);
+        if (null != getArguments()) {
+            mMovieId = getArguments().getInt(Constants.MOVIE_ID_KEY);
+            String sortKey = getArguments().getString(Constants.SORTING_KEY);
             mPosterImage = getArguments().getString(Constants.POSTER_IMAGE_KEY);
-            Log.d(LOG_TAG, "onCreate() called with,mPosterImage:"+mPosterImage+",mMovieId:"+mMovieId+",sortKey"+sortKey);
-
             mFavorite = getString(R.string.SORT_ORDER_FAVORITE).equals(sortKey);
 
-            if(!mFavorite) mFavorite=isMovieFavorite(mMovieId);
-            if (!mFavorite) MovieSyncAdapter.syncMovieDetails(getActivity(), Integer.toString(mMovieId));
-        }
-        else{
-            //TO do : load No movie view in two pane mode.
+            if (!mFavorite) mFavorite = isMovieFavorite(mMovieId);
+            if (!mFavorite)
+                MovieSyncAdapter.syncMovieDetails(getActivity(), Integer.toString(mMovieId));
+        } else {
+            //Todo : load No movie view in two pane mode.
             Log.d(LOG_TAG, "else part onCreate()");
         }
-
-
     }
 
 
+    /* Todo: implement share action on backdrop image poster also - only for first trailer! */
    /* @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.details_menu, menu);
     }*/
 
-    @Override
+    /* Todo: implement share action on backdrop image poster also - only for first trailer! */
+   /* @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
@@ -106,15 +99,13 @@ public class MovieDetailActivityFragment extends Fragment implements LoaderManag
                 break;
         }
         return super.onOptionsItemSelected(item);
-    }
+    }*/
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
-
-        Log.v(LOG_TAG, "[onCreateView called]");
-
+        //Log.v(LOG_TAG, "[onCreateView called]");
         /*--------------------set the tool bar ------------------------*/
         ButterKnife.bind(this, rootView);
         if (getActivity() instanceof MovieDetailActivity) {
@@ -139,9 +130,8 @@ public class MovieDetailActivityFragment extends Fragment implements LoaderManag
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
-        Log.v(LOG_TAG, "[onActivityCreated called]");
-        if(-1!= mMovieId){
-            Log.v(LOG_TAG, "[load movie details !]");
+        //Log.v(LOG_TAG, "[onActivityCreated called]");
+        if (-1 != mMovieId) {
             Bundle bundle = new Bundle();
             bundle.putInt(Constants.MOVIE_ID_KEY, mMovieId);
             getLoaderManager().initLoader(Constants.CURSOR_DETAIL_LOADER_ID, bundle, this);
@@ -152,28 +142,37 @@ public class MovieDetailActivityFragment extends Fragment implements LoaderManag
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        if (id == Constants.CURSOR_DETAIL_LOADER_ID && -1!= args.getInt(Constants.MOVIE_ID_KEY)) {
-            Uri baseContentUri = mFavorite ? MovieContract.FAVORITES_BASE_CONTENT_URI : MovieContract.BASE_CONTENT_URI;
-            Uri.Builder builder = baseContentUri.buildUpon()
-                    .appendPath(MovieContract.MOVIES_PATH)
-                    .appendPath(MovieContract.PATH_MOVIE_DETAILS);
-            ContentUris.appendId(builder, mMovieId);
-            mMovieDetailLoader = new CursorLoader(getActivity(), builder.build(), null, null, null, null);
+        switch (id) {
+            case Constants.CURSOR_DETAIL_LOADER_ID:
+                if (-1 != args.getInt(Constants.MOVIE_ID_KEY)) {
+                    Uri baseContentUri = mFavorite ? MovieContract.FAVORITES_BASE_CONTENT_URI : MovieContract.BASE_CONTENT_URI;
+                    Uri.Builder builder = baseContentUri.buildUpon()
+                            .appendPath(MovieContract.MOVIES_PATH)
+                            .appendPath(MovieContract.PATH_MOVIE_DETAILS);
+                    ContentUris.appendId(builder, mMovieId);
+                    mMovieDetailLoader = new CursorLoader(getActivity(), builder.build(), null, null, null, null);
+                }
         }
         return mMovieDetailLoader;
     }
 
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
-        mMovieDetailsAdapter.swapCursor(null);
+        switch (loader.getId()) {
+            case Constants.CURSOR_DETAIL_LOADER_ID:
+                mMovieDetailsAdapter.swapCursor(null);
+        }
     }
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-        mMovieDetailsAdapter.swapCursor(data);
-        if (mRestoreListViewState != null) {
-            mListView.onRestoreInstanceState(mRestoreListViewState);
-            mRestoreListViewState = null;
+        switch (loader.getId()) {
+            case Constants.CURSOR_DETAIL_LOADER_ID:
+                mMovieDetailsAdapter.swapCursor(data);
+                if (mRestoreListViewState != null) {
+                    mListView.onRestoreInstanceState(mRestoreListViewState);
+                    mRestoreListViewState = null;
+                }
         }
     }
 

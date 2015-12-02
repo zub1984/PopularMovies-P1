@@ -12,6 +12,9 @@ import android.os.Parcelable;
  * http://www.developerphil.com/parcelable-vs-serializable/
  * http://stackoverflow.com/questions/12503836/how-to-save-custom-arraylist-on-android-screen-rotate
  */
+/*************************************************************************************************************/
+/*#################### Not in use, ToDo: will be used while implementing Retrofit ###########################*/
+/*************************************************************************************************************/
 
 public class MdbMovie implements Parcelable {
 

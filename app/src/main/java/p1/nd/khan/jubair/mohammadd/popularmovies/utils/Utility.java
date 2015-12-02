@@ -1,4 +1,4 @@
-package p1.nd.khan.jubair.mohammadd.popularmovies;
+package p1.nd.khan.jubair.mohammadd.popularmovies.utils;
 
 /**
  * Created by laptop on 10/24/2015.
@@ -12,7 +12,7 @@ import android.net.NetworkInfo;
 
 import java.text.ParseException;
 
-import p1.nd.khan.jubair.mohammadd.popularmovies.utils.Constants;
+import p1.nd.khan.jubair.mohammadd.popularmovies.R;
 
 public class Utility {
 
@@ -53,6 +53,15 @@ public class Utility {
     public static void updatePreferredSorting(Context context, String sortOrder) {
         SharedPreferences settings = context.getSharedPreferences(Constants.PREFS_NAME, 0);
         settings.edit().putString(Constants.SORTING_KEY, sortOrder).apply();
+    }
+
+    /**
+     * Helper Method to format ratings display.
+     *
+     * @param rating ,the rating of movie
+     */
+    public static String formatRating(Context context,String rating) {
+        return rating + context.getString(R.string.rating_out_of_ten);
     }
 
 }

@@ -1,27 +1,35 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/fragment_main_id"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MainActivityFragment">
 
-    <GridView xmlns:android="http://schemas.android.com/apk/res/android"
-        android:id="@+id/movie_list_gridview"
+    <android.support.v4.widget.SwipeRefreshLayout
+        android:id="@+id/main_swipe_refresh_layout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:clipToPadding="false"
-        android:columnWidth="@dimen/poster_width"
-        android:gravity="center"
-        android:numColumns="auto_fit"
-        android:paddingTop="?attr/actionBarSize"
-        android:stretchMode="columnWidth" />
+        android:layout_height="wrap_content">
 
-    <!--<android.support.v7.widget.RecyclerView
-        android:id="@+id/movie_list_recycle_view"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:columnWidth="@dimen/poster_width"
-        android:clipToPadding="false"
-        android:paddingTop="?attr/actionBarSize"
-        android:visibility="visible" />-->
+        <GridView xmlns:android="http://schemas.android.com/apk/res/android"
+            android:id="@+id/movie_list_gridview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:columnWidth="@dimen/poster_width"
+            android:gravity="center"
+            android:numColumns="auto_fit"
+            android:paddingTop="?attr/actionBarSize"
+            android:stretchMode="columnWidth" />
+
+        <!--<android.support.v7.widget.RecyclerView
+            android:id="@+id/movie_list_recycle_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:columnWidth="@dimen/poster_width"
+            android:clipToPadding="false"
+            android:paddingTop="?attr/actionBarSize"
+            android:visibility="visible" />-->
+
+    </android.support.v4.widget.SwipeRefreshLayout>
 
 </FrameLayout>

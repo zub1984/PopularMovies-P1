@@ -8,6 +8,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -17,33 +18,18 @@ import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.GridView;
 
+import butterknife.Bind;
 import butterknife.ButterKnife;
 import p1.nd.khan.jubair.mohammadd.popularmovies.adapter.MovieAdapter;
 import p1.nd.khan.jubair.mohammadd.popularmovies.listener.EndlessScrollListener;
 import p1.nd.khan.jubair.mohammadd.popularmovies.sync.MovieSyncAdapter;
 import p1.nd.khan.jubair.mohammadd.popularmovies.utils.Constants;
+import p1.nd.khan.jubair.mohammadd.popularmovies.utils.Utility;
 
 import static p1.nd.khan.jubair.mohammadd.popularmovies.data.MovieContract.MovieEntry;
 
 
-/**
- * A placeholder fragment containing a simple view.
- */
-/*Copyright 2014 Square, Inc.
-
-        Licensed under the Apache License, Version 2.0 (the "License");
-        you may not use this file except in compliance with the License.
-        You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-        Unless required by applicable law or agreed to in writing, software
-        distributed under the License is distributed on an "AS IS" BASIS,
-        WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-        See the License for the specific language governing permissions and
-        limitations under the License.*/
-
-public class MainActivityFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>, AbsListView.OnItemClickListener {
+public class MainActivityFragment extends Fragment implements SwipeRefreshLayout.OnRefreshListener, LoaderManager.LoaderCallbacks<Cursor>, AbsListView.OnItemClickListener {
 
     private final String LOG_TAG = MainActivityFragment.class.getSimpleName();
     OnMoviePosterSelectedListener mCallback;
@@ -54,15 +40,23 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
     private static final String[] MOVIE_LIST_COLUMNS = {
             MovieEntry._ID,
             MovieEntry.C_MOVIE_ID,
-            MovieEntry.C_POSTER_PATH
+            MovieEntry.C_POSTER_PATH,
+            MovieEntry.C_VOTE_AVERAGE,
+            MovieEntry.C_RELEASE_DATE
     };
-    public static final int C_ID = 0;
+   /* public static final int C_ID = 0;
     public static final int C_MOVIE_ID = 1;
-    public static final int C_POSTER_PATH = 2;
+    public static final int C_POSTER_PATH = 2;*/
+
     private int mPosition = GridView.INVALID_POSITION;
     private Parcelable mRestoreGridViewState;
 
+
+    @Bind(R.id.movie_list_gridview)
     GridView mGridView;
+
+    @Bind(R.id.main_swipe_refresh_layout)
+    SwipeRefreshLayout mSwipeRefreshLayout;
 
     public MainActivityFragment() {
     }
@@ -114,8 +108,8 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
             Cursor cursor = (Cursor) parent.getItemAtPosition(position);
             if (null != cursor) {
                 mCallback.onMoviePosterSelected(
-                        cursor.getInt(MainActivityFragment.C_MOVIE_ID),
-                        cursor.getString(MainActivityFragment.C_POSTER_PATH),
+                        cursor.getInt(cursor.getColumnIndex(MovieEntry.C_MOVIE_ID)),
+                        cursor.getString(cursor.getColumnIndex(MovieEntry.C_POSTER_PATH)),
                         getView(),
                         position,
                         mSortOrder);
@@ -145,33 +139,35 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
 
     // since we read the location when we create the loader, all we need to do is restart things
     private void onSortingOptionChanged(String optionSelected) {
-        Bundle bundle = new Bundle();
-        bundle.putString(Constants.SORTING_KEY, optionSelected);
-        getLoaderManager().restartLoader(Constants.CURSOR_LOADER_ID, bundle, this);
-
         mSortOrder = optionSelected;
-        if (!optionSelected.equalsIgnoreCase(getString(R.string.SORT_ORDER_FAVORITE))){
-            Log.v(LOG_TAG,"option changed, reload movie,mSortOrder:"+mSortOrder);
+        Utility.updatePreferredSorting(getContext(), mSortOrder);
+        if (!optionSelected.equalsIgnoreCase(getString(R.string.SORT_ORDER_FAVORITE))) {
+            Log.v(LOG_TAG, "option changed, reload movie,mSortOrder:" + mSortOrder);
             MovieSyncAdapter.syncImmediately(getActivity(), mSortOrder);
         }
-
+        reLoad();
+        mSwipeRefreshLayout.setRefreshing(true);
         mMovieAdapter.notifyDataSetChanged();
+    }
 
+    private void reLoad() {
+        getLoaderManager().restartLoader(Constants.CURSOR_LOADER_ID, null, this);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-
-        Log.v(LOG_TAG,"onCreateView start- from MainActivityFragment!");
+        Log.v(LOG_TAG, "onCreateView start- from MainActivityFragment!");
         final View rootView = inflater.inflate(R.layout.fragment_main, container, false);
         ButterKnife.bind(this, rootView);
 
+        //<https://www.bignerdranch.com/blog/implementing-swipe-to-refresh/>
+        mSwipeRefreshLayout.setColorSchemeResources(R.color.orange, R.color.green, R.color.blue);
+        mSwipeRefreshLayout.setProgressViewOffset(true, getResources().getInteger(R.integer.progress_offset_start), getResources().getInteger(R.integer.progress_offset_end));
+
         mMovieAdapter = new MovieAdapter(getActivity(), null, 0, Constants.CURSOR_LOADER_ID);
-        mGridView = (GridView) rootView.findViewById(R.id.movie_list_gridview);
         mGridView.setAdapter(mMovieAdapter);
         mGridView.setOnItemClickListener(this);
-
         mGridView.setOnScrollListener(new EndlessScrollListener() {
             @Override
             public boolean onLoadMore(int page, int totalItemsCount) {
@@ -184,49 +180,56 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
             mPosition = savedInstanceState.getInt(Constants.SELECTED_MOVIE_KEY);
             mRestoreGridViewState = savedInstanceState.getParcelable(Constants.SELECTED_GRID_VIEW);
         }
-
-        Log.v(LOG_TAG,"onCreateView end- from MainActivityFragment!");
-
+        mSwipeRefreshLayout.setOnRefreshListener(this);
         return rootView;
     }
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
         Bundle bundle = new Bundle();
-        if (mSortOrder != null) {
+        if (null!=mSortOrder) {
             bundle.putString(Constants.SORTING_KEY, mSortOrder);
         }
-
         getLoaderManager().initLoader(Constants.CURSOR_LOADER_ID, bundle, this);
-        super.onActivityCreated(savedInstanceState);
     }
 
     // Attach loader to our database query run when loader is initialized
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-
-        String sortOrder = args.getString(Constants.SORTING_KEY, getString(R.string.SORT_ORDER_POPULARITY));
-        if (sortOrder.equals(getString(R.string.SORT_ORDER_FAVORITE)))
-            return new CursorLoader(getActivity(), MovieEntry.FAVORITES_CONTENT_URI, MOVIE_LIST_COLUMNS, null, null, null);
-        else
-            return new CursorLoader(getActivity(), MovieEntry.CONTENT_URI, MOVIE_LIST_COLUMNS, null, null,
-                    sortOrder.equals(getString(R.string.SORT_ORDER_POPULARITY)) ? Constants.DB_ORDER_POPULARITY : Constants.DB_ORDER_RATING);
+        switch (id) {
+            case Constants.CURSOR_LOADER_ID:
+                String sortOrder = Utility.getPreferredSorting(getContext());
+                if (sortOrder.equals(getString(R.string.SORT_ORDER_FAVORITE)))
+                    return new CursorLoader(getActivity(), MovieEntry.FAVORITES_CONTENT_URI, MOVIE_LIST_COLUMNS, null, null, null);
+                else
+                    return new CursorLoader(getActivity(), MovieEntry.CONTENT_URI, MOVIE_LIST_COLUMNS, null, null,
+                            sortOrder.equals(getString(R.string.SORT_ORDER_POPULARITY)) ? Constants.DB_ORDER_POPULARITY : Constants.DB_ORDER_RATING);
+        }
+        return null;
     }
 
     @Override
     public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
-
-            mMovieAdapter.swapCursor(cursor);
-            if (mPosition != GridView.INVALID_POSITION && mRestoreGridViewState != null && mGridView.getCount() >= mPosition) {
-                mGridView.onRestoreInstanceState(mRestoreGridViewState);
-                mPosition = GridView.INVALID_POSITION;
-                mRestoreGridViewState = null;
-            }
+        switch (cursorLoader.getId()) {
+            case Constants.CURSOR_LOADER_ID:
+                mSwipeRefreshLayout.setRefreshing(false);
+                mMovieAdapter.swapCursor(cursor);
+                if (mPosition != GridView.INVALID_POSITION && mRestoreGridViewState != null && mGridView.getCount() >= mPosition) {
+                    mGridView.onRestoreInstanceState(mRestoreGridViewState);
+                    mPosition = GridView.INVALID_POSITION;
+                    mRestoreGridViewState = null;
+                }
+        }
     }
 
     @Override
     public void onLoaderReset(Loader<Cursor> cursorLoader) {
-        mMovieAdapter.swapCursor(null);
+        switch (cursorLoader.getId()) {
+            case Constants.CURSOR_LOADER_ID:
+                mSwipeRefreshLayout.setRefreshing(false);
+                mMovieAdapter.swapCursor(null);
+        }
     }
 
     /* Container Activity must implement this interface
@@ -236,6 +239,11 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
         void onMoviePosterSelected(int movieId, String posterImage, View view, int position, String mSortOrder);
     }
 
+
+    @Override
+    public void onRefresh() {
+        reLoad();
+    }
 
     @Override
     public void onDestroy() {

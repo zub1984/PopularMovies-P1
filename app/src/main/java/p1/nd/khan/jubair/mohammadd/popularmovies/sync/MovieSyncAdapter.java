@@ -29,9 +29,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import p1.nd.khan.jubair.mohammadd.popularmovies.R;
-import p1.nd.khan.jubair.mohammadd.popularmovies.Utility;
 import p1.nd.khan.jubair.mohammadd.popularmovies.data.MovieContract.MovieEntry;
 import p1.nd.khan.jubair.mohammadd.popularmovies.utils.Constants;
+import p1.nd.khan.jubair.mohammadd.popularmovies.utils.Utility;
 
 
 /**
@@ -130,7 +130,7 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
             throws JSONException {
         int result = 0;
         JSONObject mdbMovieJson = new JSONObject(mdbJsonStr);
-        JSONArray moviesArray = mdbMovieJson.getJSONArray(mContext.getString(R.string.MDB_REQ_RESULTS));
+        JSONArray moviesArray = mdbMovieJson.getJSONArray(Constants.MDB_REQ_RESULTS);
         List<ContentValues> moviesList = new ArrayList<>();
 
         for (int i = 0; i < moviesArray.length(); i++) {
@@ -138,14 +138,14 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
             JSONObject mAttributes = moviesArray.getJSONObject(i);
             ContentValues mValues = new ContentValues();
 
-            mValues.put(MovieEntry.C_MOVIE_ID, mAttributes.getString(mContext.getString(R.string.MDB_MOVIE_ID)));
-            mValues.put(MovieEntry.C_ORIGINAL_TITLE, mAttributes.getString(mContext.getString(R.string.MDB_ORIGINAL_TITLE)));
-            mValues.put(MovieEntry.C_OVERVIEW, mAttributes.getString(mContext.getString(R.string.MDB_OVERVIEW)));
-            mValues.put(MovieEntry.C_BACKDROP_PATH, mAttributes.getString(mContext.getString(R.string.MDB_BACKDROP_PATH)));
-            mValues.put(MovieEntry.C_POSTER_PATH, mAttributes.getString(mContext.getString(R.string.MDB_POSTER_IMAGE)));
-            mValues.put(MovieEntry.C_RELEASE_DATE, mAttributes.getString(mContext.getString(R.string.MDB_RELEASE_DATE)));
-            mValues.put(MovieEntry.C_VOTE_AVERAGE, mAttributes.getString(mContext.getString(R.string.MDB_VOTE_AVERAGE)));
-            mValues.put(MovieEntry.C_VOTE_COUNT, mAttributes.getString(mContext.getString(R.string.MDB_VOTE_COUNT)));
+            mValues.put(MovieEntry.C_MOVIE_ID, mAttributes.getString(Constants.MDB_MOVIE_ID));
+            mValues.put(MovieEntry.C_ORIGINAL_TITLE, mAttributes.getString(Constants.MDB_ORIGINAL_TITLE));
+            mValues.put(MovieEntry.C_OVERVIEW, mAttributes.getString(Constants.MDB_OVERVIEW));
+            mValues.put(MovieEntry.C_BACKDROP_PATH, mAttributes.getString(Constants.MDB_BACKDROP_PATH));
+            mValues.put(MovieEntry.C_POSTER_PATH, mAttributes.getString(Constants.MDB_POSTER_IMAGE));
+            mValues.put(MovieEntry.C_RELEASE_DATE, mAttributes.getString(Constants.MDB_RELEASE_DATE));
+            mValues.put(MovieEntry.C_VOTE_AVERAGE, mAttributes.getString(Constants.MDB_VOTE_AVERAGE));
+            mValues.put(MovieEntry.C_VOTE_COUNT, mAttributes.getString(Constants.MDB_VOTE_COUNT));
             moviesList.add(mValues);
         }
         // Call bulkInsert to add the Movie Entries to the database from here

@@ -1,18 +1,65 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/grid_image_container"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:gravity="center">
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/grid_image_container_height">
 
     <ImageView
         android:id="@+id/movie_poster_image"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:minHeight="@dimen/poster_height"
         android:minWidth="@dimen/poster_width"
-        android:layout_marginTop="5dp"
+        android:scaleType="fitXY"
         android:transitionName="posterImage" />
+
+    <RelativeLayout
+        android:id="@+id/grid_image_title_container"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/poster_title_height"
+        android:background="@color/colorPrimaryTransparent"
+        android:layout_marginBottom="@dimen/spacing"
+        android:gravity="bottom"
+        android:layout_gravity="center_horizontal|bottom">
+
+        <ImageView
+            android:id="@+id/poster_item_star_image_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            tools:src="@drawable/ic_star_rate_black_18dp"
+            android:visibility="visible"
+            android:paddingLeft="5dp"
+            android:paddingTop="@dimen/text_padding_16dp"
+            android:paddingBottom="@dimen/text_padding_16dp"
+            android:layout_centerVertical="true"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/grid_item_rating_text_view"
+            android:textColor="@color/colorTextWhite"
+            android:textSize="@dimen/poster_text_size_14sp"
+            tools:text="9.2"
+            android:layout_centerVertical="true"
+            android:layout_toRightOf="@+id/poster_item_star_image_view"
+           />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/poster_item_release_date_text_view"
+            android:textColor="@color/colorTextWhite"
+            android:textSize="@dimen/poster_text_size_14sp"
+            tools:text="2015"
+            android:paddingRight="@dimen/poster_release_date_padding_right_8dp"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"/>
+
+
+    </RelativeLayout>
 
 </FrameLayout>

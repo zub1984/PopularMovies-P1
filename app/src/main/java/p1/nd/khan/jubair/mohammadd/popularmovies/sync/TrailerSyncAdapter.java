@@ -24,9 +24,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import p1.nd.khan.jubair.mohammadd.popularmovies.R;
-import p1.nd.khan.jubair.mohammadd.popularmovies.Utility;
 import p1.nd.khan.jubair.mohammadd.popularmovies.data.MovieContract.TrailersEntry;
 import p1.nd.khan.jubair.mohammadd.popularmovies.utils.Constants;
+import p1.nd.khan.jubair.mohammadd.popularmovies.utils.Utility;
 
 /**
  * Created by laptop on 11/16/2015.
@@ -88,7 +88,7 @@ public class TrailerSyncAdapter {
             throws JSONException {
         int result = 0;
         JSONObject mdbMovieJson = new JSONObject(reviewJsonStr);
-        JSONArray trailerArray = mdbMovieJson.getJSONArray(mContext.getString(R.string.MDB_REQ_RESULTS));
+        JSONArray trailerArray = mdbMovieJson.getJSONArray(Constants.MDB_REQ_RESULTS);
         List<ContentValues> trailerList = new ArrayList<>();
         for (int i = 0; i < trailerArray.length(); i++) {
             JSONObject mAttributes = trailerArray.getJSONObject(i);
