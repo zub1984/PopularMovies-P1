@@ -11,12 +11,26 @@ import android.accounts.NetworkErrorException;
 import android.content.Context;
 import android.os.Bundle;
 
-        /*Manages"Authentication"to Sunshine's backend service.  The SyncAdapter framework
+/*Copyright (C) 2015  Mohammad Jubair Khan (zub1984.kn@gmail.com) - Popular Movies Project of Udacity Nanodegree course.
+
+        Licensed under the Apache License, Version 2.0 (the "License");
+        you may not use this file except in compliance with the License.
+        You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+        Unless required by applicable law or agreed to in writing, software
+        distributed under the License is distributed on an "AS IS" BASIS,
+        WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+        See the License for the specific language governing permissions and
+        limitations under the License.*/
+
+        /*Manages"Authentication"to movie backend service.  The SyncAdapter framework
         *requires an authenticator object,so syncing to a service that doesn't need authentication
         *typically means creating a stub authenticator like this one.
         *This code is copied directly,in its entirety,from
         *http://developer.android.com/training/sync-adapters/creating-authenticator.html
-        *Which is a pretty handy reference when creating your own syncadapters.Just sayin'.
+        *Which is a pretty handy reference when creating your own sync adapters.'.
         */
 public class MovieAuthenticator extends AbstractAccountAuthenticator {
 

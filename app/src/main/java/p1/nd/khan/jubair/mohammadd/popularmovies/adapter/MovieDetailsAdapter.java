@@ -33,7 +33,7 @@ import p1.nd.khan.jubair.mohammadd.popularmovies.data.MovieContract.ReviewsEntry
 import p1.nd.khan.jubair.mohammadd.popularmovies.data.MovieContract.TrailersEntry;
 import p1.nd.khan.jubair.mohammadd.popularmovies.utils.Utility;
 
-/*Copyright 2013 Jake Wharton
+/*Copyright (C) 2015  Mohammad Jubair Khan (zub1984.kn@gmail.com) - Popular Movies Project of Udacity Nanodegree course.
 
         Licensed under the Apache License, Version 2.0 (the "License");
         you may not use this file except in compliance with the License.
