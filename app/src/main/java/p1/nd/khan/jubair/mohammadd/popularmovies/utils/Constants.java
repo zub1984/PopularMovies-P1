@@ -28,7 +28,11 @@ public class Constants {
     public static final String MDB_RELEASE_DATE = "release_date";
     public static final String MDB_VOTE_AVERAGE = "vote_average";
     public static final String MDB_VOTE_COUNT = "vote_count";
+    public static final String MDB_INCLUDE_ADULT = "include_adult";
 
+    public static final String SORT_BY = "sort_by";
+    public static final String API_KEY = "api_key";
+    public static final String PAGE = "page";
 
     public static final String LIST_VIEW_STATE = "list_view_state";
     public static final String FAVORITES = "favorites";

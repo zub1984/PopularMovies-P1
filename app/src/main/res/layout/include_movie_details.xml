@@ -3,7 +3,8 @@
     android:id="@+id/movie_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingTop="250dp"
+    android:paddingTop="@dimen/appBarSize"
+    android:transitionGroup="true"
     android:fitsSystemWindows="true">
 
     <LinearLayout

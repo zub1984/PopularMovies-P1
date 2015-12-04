@@ -8,8 +8,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
 
 import butterknife.ButterKnife;
 import p1.nd.khan.jubair.mohammadd.popularmovies.sync.MovieSyncAdapter;
@@ -19,7 +19,6 @@ import p1.nd.khan.jubair.mohammadd.popularmovies.utils.Utility;
 public class MainActivity extends BaseActivity implements MainActivityFragment.OnMoviePosterSelectedListener {
 
     private boolean mTwoPane;
-    private int moviePosition = -1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,9 +27,9 @@ public class MainActivity extends BaseActivity implements MainActivityFragment.O
         ButterKnife.bind(this);
         setToolbar(false, true);
 
-        if (findViewById(R.id.fragment_movie_detail) != null) {
+        if (null != findViewById(R.id.fragment_movie_detail)) {
             mTwoPane = true;
-            if (savedInstanceState == null) {
+            if (null == savedInstanceState) {
                 FragmentManager fragmentManager = getFragmentManager();
                 FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
                 fragmentTransaction.replace(
@@ -38,8 +37,6 @@ public class MainActivity extends BaseActivity implements MainActivityFragment.O
                         MovieDetailActivityFragment.newInstance(new Bundle()),
                         Constants.MOVIE_DETAIL_ACTIVITY_FRAGMENT_TAG)
                         .commit();
-            } else {
-                moviePosition = savedInstanceState.getInt(Constants.SELECTED_MOVIE_KEY);
             }
         } else {
             mTwoPane = false;
@@ -47,13 +44,17 @@ public class MainActivity extends BaseActivity implements MainActivityFragment.O
         }
 
         if (Utility.isNetworkAvailable(this)) {
-            Log.v("LOG_TAG"," call initializeSyncAdapter!");
             MovieSyncAdapter.initializeSyncAdapter(this);
+        } else {
+            Log.v("LOG_TAG", " No Internet Connection!");
+            Toast.makeText(this, "No Internet Connection.", Toast.LENGTH_SHORT).show();
         }
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+        super.onCreateOptionsMenu(menu);
+
         getMenuInflater().inflate(R.menu.menu_main, menu);
         // fix the issue of menu option checked on start.
         String sOrder = Utility.getPreferredSorting(this);
@@ -69,15 +70,18 @@ public class MainActivity extends BaseActivity implements MainActivityFragment.O
         return true;
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        return super.onOptionsItemSelected(item);
-    }
 
-    // The user selected the movie poster from the MainActivityFragment
-    // Send movie details to MovieDetailActivityFragment for display.
+    /**
+     * When the user selects the movie poster from the MainActivityFragment Send movie details to
+     * MovieDetailActivityFragment for details display.
+     *
+     * @param movieId     clicked movie id.
+     * @param posterImage poster image of clicked movie.
+     * @param view        View holder of movie
+     * @param position    position of the movie in grid view
+     * @param mSortOrder  sorting order of the movie list
+     */
     public void onMoviePosterSelected(int movieId, String posterImage, View view, int position, String mSortOrder) {
-        Log.v("LOG_TAG", "onMoviePosterSelected,posterImage:"+posterImage+",position:"+position+",movieId:"+movieId+",mTwoPane:"+mTwoPane);
         Bundle bundle = new Bundle();
         bundle.putInt(Constants.MOVIE_ID_KEY, movieId);
         bundle.putString(Constants.SORTING_KEY, mSortOrder);

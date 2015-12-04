@@ -17,7 +17,7 @@
             android:clipToPadding="false"
             android:columnWidth="@dimen/poster_width"
             android:gravity="center"
-            android:numColumns="auto_fit"
+            android:numColumns="@integer/grid_column_no"
             android:paddingTop="?attr/actionBarSize"
             android:stretchMode="columnWidth" />
 

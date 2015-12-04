@@ -12,10 +12,10 @@ import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ListView;
 
 import butterknife.Bind;
@@ -35,7 +35,7 @@ public class MovieDetailActivityFragment extends Fragment implements LoaderManag
 
     private final String LOG_TAG = MovieDetailActivityFragment.class.getSimpleName();
 
-    private int mMovieId = -1;
+    private int mMovieId;
     private boolean mFavorite;
     private ListView mListView;
     private MovieDetailsAdapter mMovieDetailsAdapter;
@@ -47,6 +47,9 @@ public class MovieDetailActivityFragment extends Fragment implements LoaderManag
     @Bind(R.id.toolbar)
     Toolbar mToolbar;
 
+    @Nullable
+    @Bind(R.id.include_not_selected_movie_details)
+    FrameLayout noSelectedView;
 
     public static MovieDetailActivityFragment newInstance(Bundle bundle) {
         MovieDetailActivityFragment fragment = new MovieDetailActivityFragment();
@@ -61,7 +64,6 @@ public class MovieDetailActivityFragment extends Fragment implements LoaderManag
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setHasOptionsMenu(true);
 
         if (null != getArguments()) {
             mMovieId = getArguments().getInt(Constants.MOVIE_ID_KEY);
@@ -69,54 +71,31 @@ public class MovieDetailActivityFragment extends Fragment implements LoaderManag
             mPosterImage = getArguments().getString(Constants.POSTER_IMAGE_KEY);
             mFavorite = getString(R.string.SORT_ORDER_FAVORITE).equals(sortKey);
 
-            if (!mFavorite) mFavorite = isMovieFavorite(mMovieId);
-            if (!mFavorite)
+            if (!mFavorite && 0 != mMovieId) mFavorite = isMovieFavorite(mMovieId);
+            if (!mFavorite && 0 != mMovieId)
                 MovieSyncAdapter.syncMovieDetails(getActivity(), Integer.toString(mMovieId));
-        } else {
-            //Todo : load No movie view in two pane mode.
-            Log.d(LOG_TAG, "else part onCreate()");
         }
+
     }
 
-
-    /* Todo: implement share action on backdrop image poster also - only for first trailer! */
-   /* @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        inflater.inflate(R.menu.details_menu, menu);
-    }*/
-
-    /* Todo: implement share action on backdrop image poster also - only for first trailer! */
-   /* @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case android.R.id.home:
-                getActivity().onBackPressed();
-                return true;
-            case R.id.share_movie:
-                Snackbar.make(getView(), "To Do : share first trailer!", Snackbar.LENGTH_SHORT).show();
-                return true;
-            default:
-                break;
-        }
-        return super.onOptionsItemSelected(item);
-    }*/
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
-        //Log.v(LOG_TAG, "[onCreateView called]");
-        /*--------------------set the tool bar ------------------------*/
         ButterKnife.bind(this, rootView);
+
+        /*------------set the tool bar ------------------*/
         if (getActivity() instanceof MovieDetailActivity) {
             MovieDetailActivity detailActivity = (MovieDetailActivity) getActivity();
             detailActivity.setToolbar(mToolbar, true, false);
         }
-         /*--------------------set the tool bar ------------------------*/
+         /*-----------set the tool bar ------------------*/
 
         mListView = (ListView) rootView.findViewById(R.id.fragment_detail_movie_container);
         mMovieDetailsAdapter = new MovieDetailsAdapter(getActivity(), null, 0, mFavorite);
         mListView.setAdapter(mMovieDetailsAdapter);
+        setMovieNotSelected();
         return rootView;
     }
 
@@ -131,20 +110,20 @@ public class MovieDetailActivityFragment extends Fragment implements LoaderManag
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         //Log.v(LOG_TAG, "[onActivityCreated called]");
-        if (-1 != mMovieId) {
+        if (0 != mMovieId) {
             Bundle bundle = new Bundle();
             bundle.putInt(Constants.MOVIE_ID_KEY, mMovieId);
             getLoaderManager().initLoader(Constants.CURSOR_DETAIL_LOADER_ID, bundle, this);
         }
-
         super.onActivityCreated(savedInstanceState);
     }
+
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         switch (id) {
             case Constants.CURSOR_DETAIL_LOADER_ID:
-                if (-1 != args.getInt(Constants.MOVIE_ID_KEY)) {
+                if (0 != args.getInt(Constants.MOVIE_ID_KEY)) {
                     Uri baseContentUri = mFavorite ? MovieContract.FAVORITES_BASE_CONTENT_URI : MovieContract.BASE_CONTENT_URI;
                     Uri.Builder builder = baseContentUri.buildUpon()
                             .appendPath(MovieContract.MOVIES_PATH)
@@ -196,6 +175,13 @@ public class MovieDetailActivityFragment extends Fragment implements LoaderManag
                 cursor.close();
             }
         }
+    }
+
+    /**
+     * Method to load not selected movie view, in two pane mode.
+     */
+    private void setMovieNotSelected() {
+        if(null!=noSelectedView) noSelectedView.setVisibility(0 == mMovieId ? noSelectedView.VISIBLE : noSelectedView.GONE);
     }
 
 }

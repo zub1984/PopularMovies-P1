@@ -5,6 +5,7 @@ import android.app.FragmentTransaction;
 import android.os.Bundle;
 import android.widget.GridView;
 
+import butterknife.ButterKnife;
 import p1.nd.khan.jubair.mohammadd.popularmovies.utils.Constants;
 
 
@@ -14,8 +15,9 @@ public class MovieDetailActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_movie_detail);
+        ButterKnife.bind(this);
 
-        if (savedInstanceState == null) {
+        if (null == savedInstanceState ) {
             /* set the intent data received from MainActivity Class*/
             Bundle arguments = new Bundle();
             arguments.putInt(Constants.MOVIE_ID_KEY, getIntent().getIntExtra(Constants.MOVIE_ID_KEY, GridView.INVALID_POSITION));
@@ -29,17 +31,4 @@ public class MovieDetailActivity extends BaseActivity {
                     .commit();
         }
     }
-
-    /* Todo: implement share action on backdrop image poster also - only for first trailer! */
-    /*@Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case android.R.id.home:
-                onBackPressed();
-                return true;
-            default:
-                break;
-        }
-        return super.onOptionsItemSelected(item);
-    }*/
 }

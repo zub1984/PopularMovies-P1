@@ -9,7 +9,6 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v4.widget.SwipeRefreshLayout;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -44,9 +43,6 @@ public class MainActivityFragment extends Fragment implements SwipeRefreshLayout
             MovieEntry.C_VOTE_AVERAGE,
             MovieEntry.C_RELEASE_DATE
     };
-   /* public static final int C_ID = 0;
-    public static final int C_MOVIE_ID = 1;
-    public static final int C_POSTER_PATH = 2;*/
 
     private int mPosition = GridView.INVALID_POSITION;
     private Parcelable mRestoreGridViewState;
@@ -137,27 +133,36 @@ public class MainActivityFragment extends Fragment implements SwipeRefreshLayout
         return super.onOptionsItemSelected(item);
     }
 
-    // since we read the location when we create the loader, all we need to do is restart things
+    /**
+     * Sync the data display when user changes the sorting order.
+     *
+     * @param optionSelected selected sorting order.
+     */
     private void onSortingOptionChanged(String optionSelected) {
         mSortOrder = optionSelected;
-        Utility.updatePreferredSorting(getContext(), mSortOrder);
-        if (!optionSelected.equalsIgnoreCase(getString(R.string.SORT_ORDER_FAVORITE))) {
-            Log.v(LOG_TAG, "option changed, reload movie,mSortOrder:" + mSortOrder);
-            MovieSyncAdapter.syncImmediately(getActivity(), mSortOrder);
+        Utility.updatePreferredSorting(getActivity(), mSortOrder);
+        if (!optionSelected.equals(getString(R.string.SORT_ORDER_FAVORITE))) {
+            MovieSyncAdapter.syncImmediately(getActivity());
         }
-        reLoad();
+
         mSwipeRefreshLayout.setRefreshing(true);
+        reLoad();
         mMovieAdapter.notifyDataSetChanged();
     }
 
+    /**
+     * re-start the loader and set the bundle arguments.
+     */
     private void reLoad() {
-        getLoaderManager().restartLoader(Constants.CURSOR_LOADER_ID, null, this);
+        mSortOrder = null != mSortOrder ? mSortOrder : Utility.getPreferredSorting(getActivity());
+        Bundle bundle = new Bundle();
+        bundle.putString(Constants.SORTING_KEY, mSortOrder);
+        getLoaderManager().restartLoader(Constants.CURSOR_LOADER_ID, bundle, this);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        Log.v(LOG_TAG, "onCreateView start- from MainActivityFragment!");
         final View rootView = inflater.inflate(R.layout.fragment_main, container, false);
         ButterKnife.bind(this, rootView);
 
@@ -188,7 +193,7 @@ public class MainActivityFragment extends Fragment implements SwipeRefreshLayout
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         Bundle bundle = new Bundle();
-        if (null!=mSortOrder) {
+        if (null != mSortOrder) {
             bundle.putString(Constants.SORTING_KEY, mSortOrder);
         }
         getLoaderManager().initLoader(Constants.CURSOR_LOADER_ID, bundle, this);
@@ -199,7 +204,7 @@ public class MainActivityFragment extends Fragment implements SwipeRefreshLayout
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         switch (id) {
             case Constants.CURSOR_LOADER_ID:
-                String sortOrder = Utility.getPreferredSorting(getContext());
+                String sortOrder = args.getString(Constants.SORTING_KEY);
                 if (sortOrder.equals(getString(R.string.SORT_ORDER_FAVORITE)))
                     return new CursorLoader(getActivity(), MovieEntry.FAVORITES_CONTENT_URI, MOVIE_LIST_COLUMNS, null, null, null);
                 else
@@ -211,9 +216,9 @@ public class MainActivityFragment extends Fragment implements SwipeRefreshLayout
 
     @Override
     public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
+        mSwipeRefreshLayout.setRefreshing(false);
         switch (cursorLoader.getId()) {
             case Constants.CURSOR_LOADER_ID:
-                mSwipeRefreshLayout.setRefreshing(false);
                 mMovieAdapter.swapCursor(cursor);
                 if (mPosition != GridView.INVALID_POSITION && mRestoreGridViewState != null && mGridView.getCount() >= mPosition) {
                     mGridView.onRestoreInstanceState(mRestoreGridViewState);

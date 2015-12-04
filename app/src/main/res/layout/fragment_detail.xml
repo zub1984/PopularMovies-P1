@@ -9,6 +9,10 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center" />
+
+    <include
+        android:id="@+id/include_not_selected_movie_details"
+        layout="@layout/include_not_selected_movie_details" />
 </FrameLayout>
 
 

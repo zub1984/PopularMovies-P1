@@ -3,7 +3,6 @@ package p1.nd.khan.jubair.mohammadd.popularmovies.sync;
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
-import android.util.Log;
 
 /**
  * Created by laptop on 11/13/2015.
@@ -14,7 +13,7 @@ public class MovieSyncService extends Service {
 
     @Override
     public void onCreate() {
-        Log.d("MovieSyncService", "onCreate - MovieSyncService");
+        //Log.d("MovieSyncService", "onCreate - MovieSyncService");
         synchronized (sSyncAdapterLock) {
             if (sMovieSyncAdapter == null) {
                 sMovieSyncAdapter = new MovieSyncAdapter(getApplicationContext(), true);
